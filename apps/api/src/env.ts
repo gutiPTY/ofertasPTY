@@ -5,8 +5,9 @@ const schema = z.object({
   SUPABASE_URL: z.string().url(),
   SUPABASE_ANON_KEY: z.string(),
   SUPABASE_SERVICE_ROLE_KEY: z.string(),
-  SUPABASE_STORAGE_BUCKET: z.string(),
-  JWT_SECRET: z.string().min(10),
+  // Todavía no se creó el bucket de Storage (recién hace falta para subir
+  // imágenes de ofertas en Fase 1); opcional hasta entonces.
+  SUPABASE_STORAGE_BUCKET: z.string().optional(),
   PORT: z.coerce.number().default(3001),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
