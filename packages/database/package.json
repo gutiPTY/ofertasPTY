@@ -1,0 +1,30 @@
+{
+  "name": "@ofertaspty/database",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate": "prisma generate",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "studio": "prisma studio",
+    "postinstall": "prisma generate",
+    "lint": "eslint .",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.1.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.1.0",
+    "@ofertaspty/config": "workspace:*",
+    "@types/node": "^22.10.0",
+    "eslint": "^9.15.0",
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "encuentraofertaspty",
+  "private": true,
+  "packageManager": "pnpm@11.23.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "check-types": "turbo run check-types",
+    "format": "prettier --write .",
+    "db:generate": "pnpm --filter @ofertaspty/database run generate",
+    "db:migrate:dev": "pnpm --filter @ofertaspty/database run migrate:dev",
+    "db:migrate:deploy": "pnpm --filter @ofertaspty/database run migrate:deploy",
+    "db:studio": "pnpm --filter @ofertaspty/database run studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.0",
+    "prettier": "^3.4.0",
+    "typescript": "^5.7.0"
+  }
+}
