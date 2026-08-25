@@ -2,14 +2,17 @@
   "expo": {
     "name": "Encuentra Ofertas PTY",
     "slug": "encuentraofertaspty",
+    "owner": "gutipty",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.gutipty.encuentraofertaspty"
     },
     "android": {
+      "package": "com.gutipty.encuentraofertaspty",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -20,6 +23,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "6364439b-9582-404d-99a0-e76b2b1c6dc9"
+      }
     }
   }
 }
