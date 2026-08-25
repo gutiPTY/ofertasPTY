@@ -12,6 +12,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fastify/cors": "^10.0.1",
+    "@fastify/rate-limit": "^10.1.1",
     "@ofertaspty/database": "workspace:*",
     "@ofertaspty/shared-types": "workspace:*",
     "fastify": "^5.1.0",
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "@ofertaspty/config": "workspace:*",
+    "@supabase/supabase-js": "^2.47.0",
     "@types/node": "^22.10.0",
     "dotenv": "^16.4.5",
     "eslint": "^9.15.0",

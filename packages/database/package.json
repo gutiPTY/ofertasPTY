@@ -13,9 +13,15 @@
     "migrate:dev": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "studio": "prisma studio",
+    "seed": "prisma db seed",
+    "promote-admin": "tsx scripts/promote-admin.ts",
+    "create-storage-bucket": "tsx scripts/create-storage-bucket.ts",
     "postinstall": "prisma generate",
     "lint": "eslint .",
     "check-types": "tsc --noEmit"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0"
@@ -23,8 +29,11 @@
   "devDependencies": {
     "prisma": "^6.1.0",
     "@ofertaspty/config": "workspace:*",
+    "@supabase/supabase-js": "^2.47.0",
     "@types/node": "^22.10.0",
+    "dotenv": "^16.4.5",
     "eslint": "^9.15.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }
 }

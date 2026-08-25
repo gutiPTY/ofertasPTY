@@ -3,6 +3,7 @@
     "name": "Encuentra Ofertas PTY",
     "slug": "encuentraofertaspty",
     "owner": "gutipty",
+    "scheme": "encuentraofertaspty",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -28,6 +29,9 @@
       "eas": {
         "projectId": "6364439b-9582-404d-99a0-e76b2b1c6dc9"
       }
-    }
+    },
+    "plugins": [
+      "expo-web-browser"
+    ]
   }
 }
