@@ -26,3 +26,13 @@ export const ModerarOfertaInputSchema = z.object({
   motivo: z.string().min(1).max(500).optional(),
 });
 export type ModerarOfertaInput = z.infer<typeof ModerarOfertaInputSchema>;
+
+export const FEED_PAGE_SIZE = 12;
+
+export const FiltrosFeedSchema = z.object({
+  categoriaId: z.string().uuid().optional(),
+  provincia: z.enum(PROVINCIAS_PANAMA).optional(),
+  q: z.string().min(1).max(120).optional(),
+  page: z.coerce.number().int().positive().default(1),
+});
+export type FiltrosFeed = z.infer<typeof FiltrosFeedSchema>;

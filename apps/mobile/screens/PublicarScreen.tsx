@@ -14,7 +14,7 @@ import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { CrearOfertaInputSchema, PROVINCIAS_PANAMA } from "@ofertaspty/shared-types";
 import { supabase } from "../lib/supabase";
-import { useSession } from "../context/SessionContext";
+import { useOptionalSession } from "../context/SessionContext";
 import type { RootStackParamList } from "../types/navigation";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Publicar">;
@@ -25,7 +25,7 @@ interface Categoria {
 }
 
 export default function PublicarScreen({ navigation }: Props) {
-  const session = useSession();
+  const session = useOptionalSession();
 
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
@@ -46,6 +46,12 @@ export default function PublicarScreen({ navigation }: Props) {
       .catch(() => setCategorias([]));
   }, []);
 
+  useEffect(() => {
+    if (!session) navigation.replace("Auth");
+  }, [session, navigation]);
+
+  if (!session) return null;
+
   async function pickImage() {
     const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permiso.granted) {
@@ -63,6 +69,7 @@ export default function PublicarScreen({ navigation }: Props) {
   }
 
   async function handleSubmit() {
+    if (!session) return;
     if (!imagen) {
       Alert.alert("Falta la imagen", "Elegí una foto para la oferta.");
       return;

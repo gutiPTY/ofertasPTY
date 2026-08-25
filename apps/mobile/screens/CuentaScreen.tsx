@@ -1,13 +1,24 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { supabase } from "../lib/supabase";
-import { useSession } from "../context/SessionContext";
+import { useOptionalSession } from "../context/SessionContext";
 import type { RootStackParamList } from "../types/navigation";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Home">;
+type Props = NativeStackScreenProps<RootStackParamList, "Cuenta">;
 
-export default function HomeScreen({ navigation }: Props) {
-  const session = useSession();
+export default function CuentaScreen({ navigation }: Props) {
+  const session = useOptionalSession();
+
+  if (!session) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Encuentra Ofertas PTY</Text>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Auth")}>
+          <Text style={styles.buttonText}>Ingresar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -21,6 +32,9 @@ export default function HomeScreen({ navigation }: Props) {
       </TouchableOpacity>
       <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("MisOfertas")}>
         <Text style={styles.secondaryButtonText}>Mis ofertas</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Favoritos")}>
+        <Text style={styles.secondaryButtonText}>Favoritos</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.secondaryButton} onPress={() => supabase.auth.signOut()}>

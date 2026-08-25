@@ -73,6 +73,7 @@ model Categoria {
 
 model Oferta {
   id               String       @id @default(uuid())
+  slug             String       @unique
   titulo           String
   descripcion      String
   imagenUrl        String

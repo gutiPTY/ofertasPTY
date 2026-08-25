@@ -3,6 +3,10 @@ import type { Session } from "@supabase/supabase-js";
 
 export const SessionContext = createContext<Session | null>(null);
 
+export function useOptionalSession(): Session | null {
+  return useContext(SessionContext);
+}
+
 export function useSession(): Session {
   const session = useContext(SessionContext);
   if (!session) {
