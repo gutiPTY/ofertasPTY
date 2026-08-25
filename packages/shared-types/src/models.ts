@@ -26,6 +26,7 @@ export interface Categoria {
 
 export interface Oferta {
   id: string;
+  slug: string;
   titulo: string;
   descripcion: string;
   imagenUrl: string;

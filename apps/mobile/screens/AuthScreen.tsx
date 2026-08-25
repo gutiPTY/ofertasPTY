@@ -3,10 +3,14 @@ import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import * as Linking from "expo-linking";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LoginInputSchema, RegisterInputSchema } from "@ofertaspty/shared-types";
 import { supabase } from "../lib/supabase";
+import type { RootStackParamList } from "../types/navigation";
 
 WebBrowser.maybeCompleteAuthSession();
+
+type Props = NativeStackScreenProps<RootStackParamList, "Auth">;
 
 async function syncUsuario(accessToken: string, email: string, nombre: string) {
   await fetch(`${process.env.EXPO_PUBLIC_API_URL}/auth/sync`, {
@@ -19,7 +23,7 @@ async function syncUsuario(accessToken: string, email: string, nombre: string) {
   });
 }
 
-export default function AuthScreen() {
+export default function AuthScreen({ navigation }: Props) {
   const [mode, setMode] = useState<"login" | "registro">("login");
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
@@ -37,7 +41,11 @@ export default function AuthScreen() {
       setLoading(true);
       const { error } = await supabase.auth.signInWithPassword(parsed.data);
       setLoading(false);
-      if (error) Alert.alert("Error", error.message);
+      if (error) {
+        Alert.alert("Error", error.message);
+        return;
+      }
+      if (navigation.canGoBack()) navigation.goBack();
       return;
     }
 
@@ -59,7 +67,11 @@ export default function AuthScreen() {
     }
 
     setLoading(false);
-    if (error) Alert.alert("Error", error.message);
+    if (error) {
+      Alert.alert("Error", error.message);
+      return;
+    }
+    if (navigation.canGoBack()) navigation.goBack();
   }
 
   async function handleGoogleSignIn() {
@@ -92,6 +104,7 @@ export default function AuthScreen() {
         user.email ??
         "Usuario";
       await syncUsuario(sessionData.session.access_token, user.email!, nombreGoogle);
+      if (navigation.canGoBack()) navigation.goBack();
     } catch (error) {
       Alert.alert("Error", error instanceof Error ? error.message : "No se pudo iniciar sesión con Google");
     } finally {

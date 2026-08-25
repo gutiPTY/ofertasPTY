@@ -1,7 +1,11 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
-import { useSession } from "../context/SessionContext";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { useOptionalSession } from "../context/SessionContext";
+import type { RootStackParamList } from "../types/navigation";
+
+type Props = NativeStackScreenProps<RootStackParamList, "MisOfertas">;
 
 interface OfertaConModeracion {
   id: string;
@@ -19,13 +23,18 @@ const ESTADO_LABEL: Record<OfertaConModeracion["estado"], string> = {
   EN_REVISION: "En revisión",
 };
 
-export default function MisOfertasScreen() {
-  const session = useSession();
+export default function MisOfertasScreen({ navigation }: Props) {
+  const session = useOptionalSession();
   const [ofertas, setOfertas] = useState<OfertaConModeracion[]>([]);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    if (!session) navigation.replace("Auth");
+  }, [session, navigation]);
+
   useFocusEffect(
     useCallback(() => {
+      if (!session) return;
       let active = true;
       setLoading(true);
       fetch(`${process.env.EXPO_PUBLIC_API_URL}/ofertas/mine`, {
@@ -41,10 +50,10 @@ export default function MisOfertasScreen() {
       return () => {
         active = false;
       };
-    }, [session.access_token]),
+    }, [session]),
   );
 
-  if (loading) {
+  if (!session || loading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator />

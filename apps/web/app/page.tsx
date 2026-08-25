@@ -1,56 +1,82 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import LogoutButton from "@/components/LogoutButton";
+import FiltrosFeed from "@/components/FiltrosFeed";
+import OfertaCard from "@/components/OfertaCard";
 
-export default async function Home() {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user = session?.user ?? null;
+interface OfertaFeed {
+  id: string;
+  slug: string;
+  titulo: string;
+  imagenUrl: string;
+  provincia: string;
+  precioOferta: string | null;
+  precioOriginal: string | null;
+  categoria: { nombre: string };
+}
 
-  let role: string | null = null;
-  if (session) {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-      cache: "no-store",
-    }).catch(() => null);
-    if (res?.ok) {
-      role = (await res.json()).role ?? null;
-    }
+interface SearchParams {
+  categoriaId?: string;
+  provincia?: string;
+  q?: string;
+  page?: string;
+}
+
+export default async function Home({ searchParams }: { searchParams: SearchParams }) {
+  const params = new URLSearchParams();
+  if (searchParams.categoriaId) params.set("categoriaId", searchParams.categoriaId);
+  if (searchParams.provincia) params.set("provincia", searchParams.provincia);
+  if (searchParams.q) params.set("q", searchParams.q);
+  if (searchParams.page) params.set("page", searchParams.page);
+
+  const [feedRes, categoriasRes] = await Promise.all([
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/ofertas?${params.toString()}`, { cache: "no-store" }),
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/categorias`, { cache: "no-store" }),
+  ]);
+
+  const { ofertas, total, page, pageSize } = (await feedRes.json()) as {
+    ofertas: OfertaFeed[];
+    total: number;
+    page: number;
+    pageSize: number;
+  };
+  const { categorias } = await categoriasRes.json();
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  function pageHref(nextPage: number) {
+    const p = new URLSearchParams(params);
+    p.set("page", String(nextPage));
+    return `/?${p.toString()}`;
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col items-center justify-center gap-4 p-6 text-center">
-      <h1 className="text-2xl font-semibold">Encuentra Ofertas PTY</h1>
-      {user ? (
-        <>
-          <p>
-            Sesión iniciada como <strong>{user.email}</strong>
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link href="/publicar" className="rounded bg-black px-3 py-2 text-sm text-white">
-              Publicar oferta
+    <main className="mx-auto flex max-w-4xl flex-col gap-4 p-6">
+      <FiltrosFeed categorias={categorias} />
+
+      {ofertas.length === 0 && (
+        <p className="py-12 text-center text-neutral-500">No hay ofertas que coincidan con la búsqueda.</p>
+      )}
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+        {ofertas.map((oferta) => (
+          <OfertaCard key={oferta.id} {...oferta} />
+        ))}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 pt-4 text-sm">
+          {page > 1 && (
+            <Link href={pageHref(page - 1)} className="rounded border px-3 py-1.5">
+              Anterior
             </Link>
-            <Link href="/mis-ofertas" className="rounded border px-3 py-2 text-sm">
-              Mis ofertas
+          )}
+          <span className="px-3 py-1.5 text-neutral-500">
+            Página {page} de {totalPages}
+          </span>
+          {page < totalPages && (
+            <Link href={pageHref(page + 1)} className="rounded border px-3 py-1.5">
+              Siguiente
             </Link>
-            {role === "ADMIN" && (
-              <Link href="/admin" className="rounded border px-3 py-2 text-sm">
-                Panel admin
-              </Link>
-            )}
-          </div>
-          <LogoutButton />
-        </>
-      ) : (
-        <div className="flex gap-3">
-          <Link href="/login" className="rounded bg-black px-3 py-2 text-white">
-            Ingresar
-          </Link>
-          <Link href="/registro" className="rounded border px-3 py-2">
-            Crear cuenta
-          </Link>
+          )}
         </div>
       )}
     </main>

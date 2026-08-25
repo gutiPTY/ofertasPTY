@@ -1,7 +1,9 @@
+import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
-import { CrearOfertaInputSchema } from "@ofertaspty/shared-types";
+import { CrearOfertaInputSchema, FEED_PAGE_SIZE, FiltrosFeedSchema } from "@ofertaspty/shared-types";
 import { prisma } from "@ofertaspty/database";
 import { MAX_OFERTAS_PENDIENTES_POR_USUARIO } from "../lib/constants";
+import { slugify } from "../lib/slugify";
 
 export default async function ofertasRoutes(fastify: FastifyInstance) {
   fastify.post(
@@ -27,8 +29,13 @@ export default async function ofertasRoutes(fastify: FastifyInstance) {
         return reply.code(429).send({ error: "limite_ofertas_pendientes" });
       }
 
+      const id = randomUUID();
+      const slug = `${slugify(body.titulo)}-${id.slice(0, 8)}`;
+
       const oferta = await prisma.oferta.create({
         data: {
+          id,
+          slug,
           titulo: body.titulo,
           descripcion: body.descripcion,
           imagenUrl: body.imagenUrl,
@@ -72,4 +79,52 @@ export default async function ofertasRoutes(fastify: FastifyInstance) {
       return reply.send({ ofertas });
     },
   );
+
+  // Feed público: solo ofertas PUBLICADA, nunca otro estado (regla de
+  // negocio no negociable, ver CLAUDE.md).
+  fastify.get("/ofertas", async (request, reply) => {
+    const filtros = FiltrosFeedSchema.parse(request.query);
+
+    const where = {
+      estado: "PUBLICADA" as const,
+      ...(filtros.categoriaId ? { categoriaId: filtros.categoriaId } : {}),
+      ...(filtros.provincia ? { provincia: filtros.provincia } : {}),
+      ...(filtros.q
+        ? {
+            OR: [
+              { titulo: { contains: filtros.q, mode: "insensitive" as const } },
+              { descripcion: { contains: filtros.q, mode: "insensitive" as const } },
+            ],
+          }
+        : {}),
+    };
+
+    const [ofertas, total] = await Promise.all([
+      prisma.oferta.findMany({
+        where,
+        orderBy: [{ destacada: "desc" }, { creadoEn: "desc" }],
+        include: { categoria: true },
+        skip: (filtros.page - 1) * FEED_PAGE_SIZE,
+        take: FEED_PAGE_SIZE,
+      }),
+      prisma.oferta.count({ where }),
+    ]);
+
+    return reply.send({ ofertas, total, page: filtros.page, pageSize: FEED_PAGE_SIZE });
+  });
+
+  fastify.get("/ofertas/:slug", async (request, reply) => {
+    const { slug } = request.params as { slug: string };
+
+    const oferta = await prisma.oferta.findFirst({
+      where: { slug, estado: "PUBLICADA" },
+      include: { categoria: true, comercio: true },
+    });
+
+    if (!oferta) {
+      return reply.code(404).send({ error: "oferta_no_encontrada" });
+    }
+
+    return reply.send({ oferta });
+  });
 }

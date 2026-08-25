@@ -8,6 +8,7 @@ import healthRoutes from "./routes/health";
 import authRoutes from "./routes/auth";
 import categoriasRoutes from "./routes/categorias";
 import ofertasRoutes from "./routes/ofertas";
+import favoritosRoutes from "./routes/favoritos";
 import adminRoutes from "./routes/admin";
 
 export function buildApp(): FastifyInstance {
@@ -29,6 +30,7 @@ export function buildApp(): FastifyInstance {
   app.register(authRoutes);
   app.register(categoriasRoutes);
   app.register(ofertasRoutes);
+  app.register(favoritosRoutes);
   app.register(adminRoutes);
 
   return app;
