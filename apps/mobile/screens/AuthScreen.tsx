@@ -1,7 +1,23 @@
 import { useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import * as AuthSession from "expo-auth-session";
+import * as Linking from "expo-linking";
 import { LoginInputSchema, RegisterInputSchema } from "@ofertaspty/shared-types";
 import { supabase } from "../lib/supabase";
+
+WebBrowser.maybeCompleteAuthSession();
+
+async function syncUsuario(accessToken: string, email: string, nombre: string) {
+  await fetch(`${process.env.EXPO_PUBLIC_API_URL}/auth/sync`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ email, nombre }),
+  });
+}
 
 export default function AuthScreen() {
   const [mode, setMode] = useState<"login" | "registro">("login");
@@ -39,18 +55,48 @@ export default function AuthScreen() {
     });
 
     if (!error && data.session) {
-      await fetch(`${process.env.EXPO_PUBLIC_API_URL}/auth/sync`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${data.session.access_token}`,
-        },
-        body: JSON.stringify({ email: parsed.data.email, nombre: parsed.data.nombre }),
-      });
+      await syncUsuario(data.session.access_token, parsed.data.email, parsed.data.nombre);
     }
 
     setLoading(false);
     if (error) Alert.alert("Error", error.message);
+  }
+
+  async function handleGoogleSignIn() {
+    setLoading(true);
+    try {
+      const redirectTo = AuthSession.makeRedirectUri();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo, skipBrowserRedirect: true },
+      });
+      if (error || !data.url) throw error ?? new Error("No se pudo iniciar el flujo de Google");
+
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      if (result.type !== "success") return;
+
+      const { queryParams } = Linking.parse(result.url);
+      const code = queryParams?.code;
+      if (typeof code !== "string") {
+        throw new Error("La respuesta de Google no incluyó un código válido");
+      }
+
+      const { data: sessionData, error: exchangeError } =
+        await supabase.auth.exchangeCodeForSession(code);
+      if (exchangeError || !sessionData.session) throw exchangeError;
+
+      const user = sessionData.session.user;
+      const nombreGoogle =
+        (user.user_metadata?.full_name as string | undefined) ??
+        (user.user_metadata?.name as string | undefined) ??
+        user.email ??
+        "Usuario";
+      await syncUsuario(sessionData.session.access_token, user.email!, nombreGoogle);
+    } catch (error) {
+      Alert.alert("Error", error instanceof Error ? error.message : "No se pudo iniciar sesión con Google");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -90,6 +136,10 @@ export default function AuthScreen() {
         )}
       </TouchableOpacity>
 
+      <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn} disabled={loading}>
+        <Text style={styles.googleButtonText}>Continuar con Google</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity onPress={() => setMode(mode === "login" ? "registro" : "login")}>
         <Text style={styles.link}>
           {mode === "login" ? "¿No tenés cuenta? Registrate" : "¿Ya tenés cuenta? Ingresá"}
@@ -105,5 +155,7 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 12 },
   button: { backgroundColor: "#000", borderRadius: 8, padding: 14, alignItems: "center" },
   buttonText: { color: "#fff", fontWeight: "600" },
+  googleButton: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 14, alignItems: "center" },
+  googleButtonText: { fontWeight: "600" },
   link: { textAlign: "center", marginTop: 12, color: "#333" },
 });

@@ -17,9 +17,13 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
+    "@ofertaspty/web#check-types": {
+      "dependsOn": ["^build", "@ofertaspty/web#build"],
+      "outputs": []
+    },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "outputs": []
     }
   }
 }

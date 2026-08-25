@@ -1,0 +1,42 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+
+async function accessToken() {
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("No autenticado");
+  return session.access_token;
+}
+
+export async function aprobarOferta(id: string) {
+  const token = await accessToken();
+  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/ofertas/${id}/aprobar`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  revalidatePath("/admin");
+}
+
+export async function rechazarOferta(id: string, formData: FormData) {
+  const token = await accessToken();
+  const motivo = formData.get("motivo");
+  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/ofertas/${id}/rechazar`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ motivo: typeof motivo === "string" && motivo ? motivo : undefined }),
+  });
+  revalidatePath("/admin");
+}
+
+export async function suspenderUsuario(id: string) {
+  const token = await accessToken();
+  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/usuarios/${id}/suspender`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  revalidatePath("/admin");
+}
