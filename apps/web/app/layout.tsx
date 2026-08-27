@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import localFont from "next/font/local";
 import Header from "@/components/Header";
 import "./globals.css";
@@ -24,6 +25,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+
   return (
     <html lang="en">
       <body
@@ -32,6 +35,14 @@ export default function RootLayout({
         <Header />
         {children}
       </body>
+      {adsenseClientId && (
+        <Script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`}
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+      )}
     </html>
   );
 }
