@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import FavoritoButton from "@/components/FavoritoButton";
 import ReportarButton from "@/components/ReportarButton";
+import AdUnit from "@/components/AdUnit";
 
 interface OfertaDetalle {
   id: string;
@@ -84,6 +85,10 @@ export default async function OfertaDetallePage({ params }: { params: { slug: st
       </div>
 
       <ReportarButton ofertaId={oferta.id} />
+
+      <div className="border-t pt-4">
+        <AdUnit slot="3543750020" format="auto" fullWidthResponsive />
+      </div>
     </main>
   );
 }
