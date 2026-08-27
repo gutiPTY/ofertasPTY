@@ -25,6 +25,19 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     },
   );
 
+  fastify.get(
+    "/admin/ofertas/en-revision",
+    { preHandler: requireAdmin },
+    async (_request, reply) => {
+      const ofertas = await prisma.oferta.findMany({
+        where: { estado: "EN_REVISION" },
+        orderBy: { actualizadoEn: "asc" },
+        include: { categoria: true, creadoPor: true, reportes: true },
+      });
+      return reply.send({ ofertas });
+    },
+  );
+
   fastify.post(
     "/admin/ofertas/:id/aprobar",
     { preHandler: requireAdmin },

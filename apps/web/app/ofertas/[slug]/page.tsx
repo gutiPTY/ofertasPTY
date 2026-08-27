@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import FavoritoButton from "@/components/FavoritoButton";
+import ReportarButton from "@/components/ReportarButton";
 
 interface OfertaDetalle {
   id: string;
@@ -81,6 +82,8 @@ export default async function OfertaDetallePage({ params }: { params: { slug: st
           </a>
         )}
       </div>
+
+      <ReportarButton ofertaId={oferta.id} />
     </main>
   );
 }
