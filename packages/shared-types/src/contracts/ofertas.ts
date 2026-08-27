@@ -27,6 +27,11 @@ export const ModerarOfertaInputSchema = z.object({
 });
 export type ModerarOfertaInput = z.infer<typeof ModerarOfertaInputSchema>;
 
+export const CrearReporteInputSchema = z.object({
+  motivo: z.string().min(3).max(300),
+});
+export type CrearReporteInput = z.infer<typeof CrearReporteInputSchema>;
+
 export const FEED_PAGE_SIZE = 12;
 
 export const FiltrosFeedSchema = z.object({
