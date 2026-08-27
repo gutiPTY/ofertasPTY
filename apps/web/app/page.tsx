@@ -1,6 +1,8 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import FiltrosFeed from "@/components/FiltrosFeed";
 import OfertaCard from "@/components/OfertaCard";
+import AdUnit from "@/components/AdUnit";
 
 interface OfertaFeed {
   id: string;
@@ -57,8 +59,15 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
       )}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-        {ofertas.map((oferta) => (
-          <OfertaCard key={oferta.id} {...oferta} />
+        {ofertas.map((oferta, index) => (
+          <Fragment key={oferta.id}>
+            <OfertaCard {...oferta} />
+            {index === 3 && ofertas.length > 4 && (
+              <div className="col-span-full">
+                <AdUnit slot="4882093875" format="fluid" layoutKey="-fb+5w+4e-db+86" />
+              </div>
+            )}
+          </Fragment>
         ))}
       </div>
 
