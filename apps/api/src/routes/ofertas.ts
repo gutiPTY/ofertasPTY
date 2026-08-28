@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { CrearOfertaInputSchema, FEED_PAGE_SIZE, FiltrosFeedSchema } from "@ofertaspty/shared-types";
 import { prisma } from "@ofertaspty/database";
-import { MAX_OFERTAS_PENDIENTES_POR_USUARIO } from "../lib/constants";
-import { slugify } from "../lib/slugify";
+import { MAX_OFERTAS_PENDIENTES_POR_USUARIO } from "../lib/constants.js";
+import { slugify } from "../lib/slugify.js";
 
 export default async function ofertasRoutes(fastify: FastifyInstance) {
   fastify.post(

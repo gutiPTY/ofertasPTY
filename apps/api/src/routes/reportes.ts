@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { CrearReporteInputSchema } from "@ofertaspty/shared-types";
 import { prisma } from "@ofertaspty/database";
-import { REPORTES_PARA_REVISION } from "../lib/constants";
+import { REPORTES_PARA_REVISION } from "../lib/constants.js";
 
 const paramsSchema = z.object({ ofertaId: z.string().uuid() });
 
