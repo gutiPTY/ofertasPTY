@@ -1,16 +1,16 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
-import { env } from "./env";
-import { loggerOptions } from "./lib/logger";
-import supabaseAuthPlugin from "./plugins/supabase-auth";
-import healthRoutes from "./routes/health";
-import authRoutes from "./routes/auth";
-import categoriasRoutes from "./routes/categorias";
-import ofertasRoutes from "./routes/ofertas";
-import favoritosRoutes from "./routes/favoritos";
-import reportesRoutes from "./routes/reportes";
-import adminRoutes from "./routes/admin";
+import { env } from "./env.js";
+import { loggerOptions } from "./lib/logger.js";
+import supabaseAuthPlugin from "./plugins/supabase-auth.js";
+import healthRoutes from "./routes/health.js";
+import authRoutes from "./routes/auth.js";
+import categoriasRoutes from "./routes/categorias.js";
+import ofertasRoutes from "./routes/ofertas.js";
+import favoritosRoutes from "./routes/favoritos.js";
+import reportesRoutes from "./routes/reportes.js";
+import adminRoutes from "./routes/admin.js";
 
 export function buildApp(): FastifyInstance {
   const app = Fastify({ logger: loggerOptions });

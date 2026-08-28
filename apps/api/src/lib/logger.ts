@@ -1,4 +1,4 @@
-import { env } from "../env";
+import { env } from "../env.js";
 
 export const loggerOptions =
   env.NODE_ENV === "development"

@@ -1,7 +1,7 @@
 import cron from "node-cron";
-import { buildApp } from "./app";
-import { env } from "./env";
-import { expirarOfertasVencidas } from "./jobs/expirar-ofertas";
+import { buildApp } from "./app.js";
+import { env } from "./env.js";
+import { expirarOfertasVencidas } from "./jobs/expirar-ofertas.js";
 
 const app = buildApp();
 

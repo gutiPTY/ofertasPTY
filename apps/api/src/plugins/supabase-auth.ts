@@ -1,7 +1,7 @@
 import fp from "fastify-plugin";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { Rol, type Rol as RolType } from "@ofertaspty/shared-types";
-import { env } from "../env";
+import { env } from "../env.js";
 
 // Este proyecto de Supabase firma con signing keys asimétricas (JWKS), no
 // con el esquema legacy de secreto compartido (HS256 + JWT_SECRET). jose
