@@ -1,20 +1,34 @@
 import { createClient } from "@/lib/supabase/server";
+import EditarOfertaForm from "./EditarOfertaForm";
 import {
   aprobarOferta,
   rechazarOferta,
+  editarOferta,
   suspenderUsuario,
   verificarComercio,
   rechazarComercio,
   togglePlanPago,
 } from "./actions";
 
+interface Categoria {
+  id: string;
+  nombre: string;
+}
+
 interface OfertaPendiente {
   id: string;
   titulo: string;
   descripcion: string;
   imagenUrl: string;
+  precioOriginal: string | null;
+  precioOferta: string | null;
   provincia: string;
+  distrito: string | null;
+  direccion: string | null;
+  linkExterno: string | null;
+  fechaInicio: string;
   fechaVencimiento: string;
+  categoriaId: string;
   categoria: { nombre: string };
   creadoPor: { id: string; nombre: string; email: string; suspendido: boolean };
 }
@@ -106,9 +120,11 @@ function ComercioVerificadoCard({ comercio }: { comercio: ComercioVerificado }) 
 function OfertaCard({
   oferta,
   reportes,
+  categorias,
 }: {
   oferta: OfertaPendiente;
   reportes?: { motivo: string }[];
+  categorias: Categoria[];
 }) {
   return (
     <li className="flex gap-4 rounded border p-3">
@@ -152,6 +168,11 @@ function OfertaCard({
               {oferta.creadoPor.suspendido ? "Reactivar autor" : "Suspender autor"}
             </button>
           </form>
+          <EditarOfertaForm
+            oferta={oferta}
+            categorias={categorias}
+            action={editarOferta.bind(null, oferta.id)}
+          />
         </div>
       </div>
     </li>
@@ -164,7 +185,7 @@ export default async function AdminPage() {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const [pendientesRes, enRevisionRes, comerciosPendientesRes, comerciosVerificadosRes] =
+  const [pendientesRes, enRevisionRes, comerciosPendientesRes, comerciosVerificadosRes, categoriasRes] =
     await Promise.all([
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/ofertas/pendientes`, {
         headers: { Authorization: `Bearer ${session!.access_token}` },
@@ -182,8 +203,10 @@ export default async function AdminPage() {
         headers: { Authorization: `Bearer ${session!.access_token}` },
         cache: "no-store",
       }),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/categorias`, { cache: "no-store" }),
     ]);
   const { ofertas } = (await pendientesRes.json()) as { ofertas: OfertaPendiente[] };
+  const { categorias } = (await categoriasRes.json()) as { categorias: Categoria[] };
   const { ofertas: ofertasEnRevision } = (await enRevisionRes.json()) as {
     ofertas: OfertaEnRevision[];
   };
@@ -201,7 +224,7 @@ export default async function AdminPage() {
         {ofertas.length === 0 && <p className="text-neutral-600">No hay ofertas pendientes.</p>}
         <ul className="flex flex-col gap-4">
           {ofertas.map((oferta) => (
-            <OfertaCard key={oferta.id} oferta={oferta} />
+            <OfertaCard key={oferta.id} oferta={oferta} categorias={categorias} />
           ))}
         </ul>
       </section>
@@ -215,7 +238,12 @@ export default async function AdminPage() {
         )}
         <ul className="flex flex-col gap-4">
           {ofertasEnRevision.map((oferta) => (
-            <OfertaCard key={oferta.id} oferta={oferta} reportes={oferta.reportes} />
+            <OfertaCard
+              key={oferta.id}
+              oferta={oferta}
+              reportes={oferta.reportes}
+              categorias={categorias}
+            />
           ))}
         </ul>
       </section>

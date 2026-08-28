@@ -17,6 +17,12 @@ const schema = z.object({
     .transform((value) => value.split(",").map((origin) => origin.trim())),
   PORT: z.coerce.number().default(3001),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  // Notificaciones por email de decisiones de moderación (Fase 5). Opcional:
+  // si falta, se loguea en vez de fallar (ver lib/email.ts).
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().default("onboarding@resend.dev"),
+  // Para armar links a la oferta dentro de los emails de notificación.
+  WEB_URL: z.string().default("http://localhost:3000"),
 });
 
 export const env = schema.parse(process.env);

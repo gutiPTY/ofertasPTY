@@ -21,6 +21,7 @@
     "fastify-plugin": "^5.0.1",
     "jose": "^5.9.6",
     "node-cron": "^4.6.0",
+    "resend": "^6.24.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {

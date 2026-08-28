@@ -43,6 +43,9 @@ export async function createTestUser(opts: { role?: RolType } = {}) {
         await prisma.moderacion.deleteMany({
           where: { OR: [{ moderadorId: usuario.id }, { oferta: { creadoPorId: usuario.id } }] },
         });
+        await prisma.ofertaEdicion.deleteMany({
+          where: { OR: [{ adminId: usuario.id }, { oferta: { creadoPorId: usuario.id } }] },
+        });
         await prisma.reporte.deleteMany({
           where: { OR: [{ usuarioId: usuario.id }, { oferta: { creadoPorId: usuario.id } }] },
         });

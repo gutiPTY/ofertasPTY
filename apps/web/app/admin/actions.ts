@@ -61,6 +61,36 @@ export async function rechazarComercio(id: string, formData: FormData) {
   revalidatePath("/admin");
 }
 
+export async function editarOferta(id: string, formData: FormData) {
+  const token = await accessToken();
+
+  const raw: Record<string, unknown> = {};
+  for (const campo of [
+    "titulo",
+    "descripcion",
+    "imagenUrl",
+    "precioOriginal",
+    "precioOferta",
+    "provincia",
+    "distrito",
+    "direccion",
+    "linkExterno",
+    "fechaInicio",
+    "fechaVencimiento",
+    "categoriaId",
+  ]) {
+    const valor = formData.get(campo);
+    if (typeof valor === "string" && valor !== "") raw[campo] = valor;
+  }
+
+  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/ofertas/${id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(raw),
+  });
+  revalidatePath("/admin");
+}
+
 export async function togglePlanPago(id: string) {
   const token = await accessToken();
   await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/comercios/${id}/plan-pago`, {

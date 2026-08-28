@@ -1,9 +1,24 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { ModerarOfertaInputSchema, RechazarComercioInputSchema, Rol } from "@ofertaspty/shared-types";
+import {
+  EditarOfertaInputSchema,
+  ModerarOfertaInputSchema,
+  RechazarComercioInputSchema,
+  Rol,
+} from "@ofertaspty/shared-types";
 import { prisma } from "@ofertaspty/database";
 import { supabaseAdmin } from "../lib/supabase-admin.js";
 import { COMERCIO_DOCS_BUCKET, COMERCIO_DOC_SIGNED_URL_SECONDS } from "../lib/constants.js";
+import { sendEmail } from "../lib/email.js";
+import { emailOfertaAprobada, emailOfertaEditada, emailOfertaRechazada } from "../lib/email-templates.js";
+
+const OFERTA_ESTADOS_EDITABLES = new Set(["PENDIENTE", "EN_REVISION"]);
+
+function serializar(valor: unknown): string | null {
+  if (valor === null || valor === undefined) return null;
+  if (valor instanceof Date) return valor.toISOString();
+  return String(valor);
+}
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -64,12 +79,16 @@ export default async function adminRoutes(fastify: FastifyInstance) {
         const oferta = await tx.oferta.update({
           where: { id },
           data: { estado: "PUBLICADA", destacada: existente.comercio?.planPago ?? false },
+          include: { creadoPor: true },
         });
         await tx.moderacion.create({
           data: { ofertaId: id, moderadorId: admin.id, decision: "PUBLICADA" },
         });
         return oferta;
       });
+
+      const { subject, html } = emailOfertaAprobada(oferta);
+      await sendEmail({ to: oferta.creadoPor.email, subject, html });
 
       return reply.send({ oferta });
     },
@@ -87,6 +106,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
         const oferta = await tx.oferta.update({
           where: { id },
           data: { estado: "RECHAZADA" },
+          include: { creadoPor: true },
         });
         await tx.moderacion.create({
           data: {
@@ -99,7 +119,64 @@ export default async function adminRoutes(fastify: FastifyInstance) {
         return oferta;
       });
 
+      const { subject, html } = emailOfertaRechazada(oferta, body.motivo);
+      await sendEmail({ to: oferta.creadoPor.email, subject, html });
+
       return reply.send({ oferta });
+    },
+  );
+
+  // Épica 3 (ampliada Fase 5): el admin corrige datos menores (precio,
+  // fecha, etc.) de una oferta que el usuario cargó mal, antes de decidir
+  // sobre ella. Solo mientras sigue PENDIENTE o EN_REVISION — no se puede
+  // reescribir contenido de una oferta ya publicada/rechazada desde acá.
+  fastify.patch(
+    "/admin/ofertas/:id",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const { id } = idParamsSchema.parse(request.params);
+      const body = EditarOfertaInputSchema.parse(request.body);
+      const admin = await currentAdmin(request.user!.id);
+
+      const actual = await prisma.oferta.findUniqueOrThrow({
+        where: { id },
+        include: { creadoPor: true },
+      });
+
+      if (!OFERTA_ESTADOS_EDITABLES.has(actual.estado)) {
+        return reply.code(409).send({ error: "no_editable_en_este_estado" });
+      }
+
+      const cambios: Record<string, { anterior: string | null; nuevo: string | null }> = {};
+      for (const [campo, nuevoValor] of Object.entries(body)) {
+        const anteriorValor = (actual as unknown as Record<string, unknown>)[campo];
+        const anteriorSerializado = serializar(anteriorValor);
+        const nuevoSerializado = serializar(nuevoValor);
+        if (anteriorSerializado !== nuevoSerializado) {
+          cambios[campo] = { anterior: anteriorSerializado, nuevo: nuevoSerializado };
+        }
+      }
+
+      if (Object.keys(cambios).length === 0) {
+        return reply.send({ oferta: actual, cambios: {} });
+      }
+
+      const oferta = await prisma.$transaction(async (tx) => {
+        const actualizado = await tx.oferta.update({
+          where: { id },
+          data: body,
+          include: { creadoPor: true },
+        });
+        await tx.ofertaEdicion.create({
+          data: { ofertaId: id, adminId: admin.id, cambios },
+        });
+        return actualizado;
+      });
+
+      const { subject, html } = emailOfertaEditada(oferta, cambios);
+      await sendEmail({ to: oferta.creadoPor.email, subject, html });
+
+      return reply.send({ oferta, cambios });
     },
   );
 

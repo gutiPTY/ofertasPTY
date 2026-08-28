@@ -44,6 +44,7 @@ model Usuario {
   moderaciones Moderacion[]         @relation("Moderador")
   preferencias PreferenciaUsuario[] // Épica 9: categorías/provincias favoritas para alertas
   comercio     Comercio?
+  ediciones    OfertaEdicion[]      @relation("EdicionesAdmin")
 }
 
 // Épica 9 — Personalización y notificaciones
@@ -123,6 +124,7 @@ model Oferta {
   reportes     Reporte[]
   favoritos    Favorito[]
   moderaciones Moderacion[]
+  ediciones    OfertaEdicion[]
 
   creadoEn      DateTime @default(now())
   actualizadoEn DateTime @updatedAt
@@ -141,6 +143,21 @@ model Moderacion {
   decision    EstadoOferta // PUBLICADA o RECHAZADA
   motivo      String?
   fecha       DateTime     @default(now())
+}
+
+// Auditoría de correcciones del admin sobre el contenido de la oferta
+// (ej. precio o fecha mal cargados por el usuario), separada de Moderacion
+// porque no es una decisión de estado (PUBLICADA/RECHAZADA) sino un cambio
+// de contenido — solo permitido mientras la oferta sigue PENDIENTE o
+// EN_REVISION (ver routes/admin.ts).
+model OfertaEdicion {
+  id       String   @id @default(uuid())
+  oferta   Oferta   @relation(fields: [ofertaId], references: [id])
+  ofertaId String
+  admin    Usuario  @relation("EdicionesAdmin", fields: [adminId], references: [id])
+  adminId  String
+  cambios  Json // { campo: { anterior, nuevo } }
+  fecha    DateTime @default(now())
 }
 
 model Reporte {

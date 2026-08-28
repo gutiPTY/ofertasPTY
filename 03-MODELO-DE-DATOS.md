@@ -133,6 +133,19 @@ model Moderacion {
   fecha        DateTime  @default(now())
 }
 
+// Auditoría de correcciones del admin sobre el contenido de la oferta
+// (ej. precio o fecha mal cargados), separada de Moderacion porque no es
+// una decisión de estado — solo permitido mientras PENDIENTE/EN_REVISION.
+model OfertaEdicion {
+  id       String   @id @default(uuid())
+  oferta   Oferta   @relation(fields: [ofertaId], references: [id])
+  ofertaId String
+  admin    Usuario  @relation("EdicionesAdmin", fields: [adminId], references: [id])
+  adminId  String
+  cambios  Json     // { campo: { anterior, nuevo } }
+  fecha    DateTime @default(now())
+}
+
 model Reporte {
   id        String   @id @default(uuid())
   oferta    Oferta   @relation(fields: [ofertaId], references: [id])
