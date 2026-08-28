@@ -40,3 +40,32 @@ export async function suspenderUsuario(id: string) {
   });
   revalidatePath("/admin");
 }
+
+export async function verificarComercio(id: string) {
+  const token = await accessToken();
+  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/comercios/${id}/verificar`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  revalidatePath("/admin");
+}
+
+export async function rechazarComercio(id: string, formData: FormData) {
+  const token = await accessToken();
+  const motivo = formData.get("motivo");
+  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/comercios/${id}/rechazar`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ motivo: typeof motivo === "string" ? motivo : "" }),
+  });
+  revalidatePath("/admin");
+}
+
+export async function togglePlanPago(id: string) {
+  const token = await accessToken();
+  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/comercios/${id}/plan-pago`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  revalidatePath("/admin");
+}

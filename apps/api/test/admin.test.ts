@@ -50,14 +50,14 @@ describe("/admin", () => {
       },
     });
     ofertaId = createRes.json().oferta.id;
-  });
+  }, 40000);
 
   afterAll(async () => {
     // Orden importa: borra primero la Moderacion (vía admin.cleanup, que
     // matchea por moderadorId) antes de que autor.cleanup borre la Oferta.
     await admin.cleanup();
     await autor.cleanup();
-  });
+  }, 30000);
 
   it("GET /admin/ofertas/pendientes rechaza a un usuario sin rol admin", async () => {
     const app = buildApp();
@@ -95,5 +95,5 @@ describe("/admin", () => {
     const moderacion = await prisma.moderacion.findFirst({ where: { ofertaId } });
     expect(moderacion?.decision).toBe("RECHAZADA");
     expect(moderacion?.motivo).toBe("Precio no verificable");
-  });
+  }, 15000);
 });

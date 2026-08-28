@@ -10,6 +10,7 @@ import categoriasRoutes from "./routes/categorias.js";
 import ofertasRoutes from "./routes/ofertas.js";
 import favoritosRoutes from "./routes/favoritos.js";
 import reportesRoutes from "./routes/reportes.js";
+import comerciosRoutes from "./routes/comercios.js";
 import adminRoutes from "./routes/admin.js";
 
 export function buildApp(): FastifyInstance {
@@ -33,6 +34,7 @@ export function buildApp(): FastifyInstance {
   app.register(ofertasRoutes);
   app.register(favoritosRoutes);
   app.register(reportesRoutes);
+  app.register(comerciosRoutes);
   app.register(adminRoutes);
 
   return app;

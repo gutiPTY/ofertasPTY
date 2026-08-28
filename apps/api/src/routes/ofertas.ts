@@ -29,6 +29,15 @@ export default async function ofertasRoutes(fastify: FastifyInstance) {
         return reply.code(429).send({ error: "limite_ofertas_pendientes" });
       }
 
+      // Épica 5: si quien publica es un comercio verificado, la oferta
+      // queda asociada automáticamente (nunca lo decide el cliente, para
+      // que nadie pueda atribuirse ofertas de otro comercio). Sigue
+      // arrancando en PENDIENTE igual que cualquier oferta.
+      const comercio = await prisma.comercio.findUnique({
+        where: { usuarioId: usuario.id },
+      });
+      const comercioId = comercio?.estado === "VERIFICADO" ? comercio.id : undefined;
+
       const id = randomUUID();
       const slug = `${slugify(body.titulo)}-${id.slice(0, 8)}`;
 
@@ -49,6 +58,7 @@ export default async function ofertasRoutes(fastify: FastifyInstance) {
           fechaVencimiento: body.fechaVencimiento,
           categoriaId: body.categoriaId,
           creadoPorId: usuario.id,
+          comercioId,
         },
       });
 
@@ -111,6 +121,18 @@ export default async function ofertasRoutes(fastify: FastifyInstance) {
     ]);
 
     return reply.send({ ofertas, total, page: filtros.page, pageSize: FEED_PAGE_SIZE });
+  });
+
+  // Sección "Ofertas destacadas" del feed público — capada, sin
+  // paginación (Épica 5).
+  fastify.get("/ofertas/destacadas", async (_request, reply) => {
+    const ofertas = await prisma.oferta.findMany({
+      where: { estado: "PUBLICADA", destacada: true },
+      orderBy: { creadoEn: "desc" },
+      take: 6,
+      include: { categoria: true },
+    });
+    return reply.send({ ofertas });
   });
 
   fastify.get("/ofertas/:slug", async (request, reply) => {

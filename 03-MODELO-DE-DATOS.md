@@ -17,6 +17,12 @@ enum EstadoOferta {
   EN_REVISION
 }
 
+enum EstadoComercio {
+  PENDIENTE
+  VERIFICADO
+  RECHAZADO
+}
+
 model Usuario {
   id              String     @id @default(uuid())
   email           String     @unique
@@ -32,6 +38,7 @@ model Usuario {
   favoritos       Favorito[]
   moderaciones    Moderacion[] @relation("Moderador")
   preferencias    PreferenciaUsuario[]  // Épica 9: categorías/provincias favoritas para alertas
+  comercio        Comercio?
 }
 
 // Épica 9 — Personalización y notificaciones
@@ -47,15 +54,29 @@ model PreferenciaUsuario {
   @@unique([usuarioId, categoriaId, provincia])
 }
 
+// Épica 5 — Comercios y plan freemium. Alta por autoservicio (usuario
+// envía sus datos fiscales), queda PENDIENTE hasta que un admin lo
+// verifica; ahí el usuario pasa a rol=COMERCIO. planPago se activa a
+// mano por el admin (no hay pagos reales integrados en el MVP).
 model Comercio {
-  id          String   @id @default(uuid())
-  nombre      String
-  categoria   Categoria @relation(fields: [categoriaId], references: [id])
-  categoriaId String
-  verificado  Boolean  @default(false)
-  planPago    Boolean  @default(false)
-  ofertas     Oferta[]
-  creadoEn    DateTime @default(now())
+  id                   String   @id @default(uuid())
+  nombre               String
+  categoria            Categoria @relation(fields: [categoriaId], references: [id])
+  categoriaId          String
+  usuario              Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId            String   @unique
+  direccion            String
+  ruc                  String
+  direccionFiscal      String
+  representanteLegal   String
+  avisoOperacionesPath String   // ruta privada en bucket "comercio-docs", no URL pública
+  estado               EstadoComercio @default(PENDIENTE)
+  motivoRechazo        String?
+  planPago             Boolean  @default(false)
+  terminosAceptadosEn  DateTime
+  ofertas              Oferta[]
+  creadoEn             DateTime @default(now())
+  actualizadoEn        DateTime @updatedAt
 }
 
 model Categoria {
