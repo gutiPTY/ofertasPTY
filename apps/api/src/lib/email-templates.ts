@@ -74,6 +74,46 @@ export function emailOfertaEditada(oferta: { titulo: string }, cambios: Record<s
   };
 }
 
+interface OfertaDigest {
+  titulo: string;
+  slug: string;
+  precioOferta: unknown;
+  precioOriginal: unknown;
+  categoria: { nombre: string };
+  provincia: string;
+}
+
+export function emailDigestPreferencias(ofertas: OfertaDigest[]) {
+  const filas = ofertas
+    .map(
+      (oferta) => `
+        <li style="margin-bottom: 12px;">
+          <a href="${env.WEB_URL}/ofertas/${oferta.slug}"><strong>${oferta.titulo}</strong></a>
+          <br />
+          <span style="font-size: 13px; color: #444;">
+            ${oferta.categoria.nombre} · ${oferta.provincia}
+            ${oferta.precioOferta ? ` · $${oferta.precioOferta}` : ""}
+          </span>
+        </li>
+      `,
+    )
+    .join("");
+
+  return {
+    subject: `${ofertas.length} oferta${ofertas.length === 1 ? "" : "s"} nueva${ofertas.length === 1 ? "" : "s"} para vos esta semana`,
+    html: layout(
+      "Ofertas de la semana según tus preferencias",
+      `
+        <p>Estas son las ofertas publicadas esta semana en tus categorías o provincias favoritas:</p>
+        <ul style="padding-left: 20px;">${filas}</ul>
+        <p style="font-size: 12px; color: #888;">
+          Podés cambiar tus categorías/provincias favoritas desde tu perfil en cualquier momento.
+        </p>
+      `,
+    ),
+  };
+}
+
 function formatear(valor: unknown) {
   if (valor === null || valor === undefined || valor === "") return "(vacío)";
   return String(valor);

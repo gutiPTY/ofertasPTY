@@ -113,6 +113,11 @@ model Oferta {
   fechaVencimiento DateTime
   estado           EstadoOferta @default(PENDIENTE)
   destacada        Boolean      @default(false) // true si viene de comercio con plan pago
+  // Momento en que pasó a PUBLICADA (distinto de creadoEn/actualizadoEn, que
+  // cambian con la edición del admin antes de publicarse) — usado por el
+  // digest semanal de Épica 9 para saber qué es "nuevo" desde la última
+  // corrida, sin depender de un cursor por usuario.
+  publicadaEn      DateTime?
 
   categoria   Categoria @relation(fields: [categoriaId], references: [id])
   categoriaId String
