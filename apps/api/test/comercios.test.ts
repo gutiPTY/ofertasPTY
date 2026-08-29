@@ -115,7 +115,7 @@ describe("/comercios", () => {
     expect(reenvio.json().comercio.estado).toBe("PENDIENTE");
   }, 15000);
 
-  it("POST /admin/comercios/:id/verificar promueve al usuario a rol COMERCIO", async () => {
+  it("POST /admin/comercios/:id/verificar marca el comercio como VERIFICADO sin tocar el rol del usuario", async () => {
     const app = buildApp();
     const usuario = await prisma.usuario.findUniqueOrThrow({
       where: { supabaseAuthId: solicitante.supabaseAuthId },
@@ -130,8 +130,12 @@ describe("/comercios", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json().comercio.estado).toBe("VERIFICADO");
 
+    // El rol de Usuario nunca se toca acá — nada depende de él para el
+    // comportamiento de "ser comercio" (ver comentario en admin.ts). Si el
+    // dueño del comercio ya era ADMIN (ej. probando con su propia cuenta),
+    // no debe perder ese rol al verificarse.
     const usuarioActualizado = await prisma.usuario.findUniqueOrThrow({ where: { id: usuario.id } });
-    expect(usuarioActualizado.rol).toBe("COMERCIO");
+    expect(usuarioActualizado.rol).toBe("USUARIO");
   }, 15000);
 
   it("una oferta creada por el comercio verificado queda asociada automáticamente", async () => {
@@ -194,5 +198,51 @@ describe("/comercios", () => {
     const destacadasRes = await app.inject({ method: "GET", url: "/ofertas/destacadas" });
     const ids = destacadasRes.json().ofertas.map((o: { id: string }) => o.id);
     expect(ids).toContain(ofertaId);
+  }, 30000);
+
+  // Regresión: verificar un comercio nunca debe pisar el rol del dueño,
+  // ni siquiera cuando ese dueño es él mismo un ADMIN probando su propio
+  // comercio (pasó de verdad en producción: un ADMIN perdió su rol al
+  // verificar su propio comercio de prueba).
+  it("verificar un comercio no le hace perder el rol ADMIN a su dueño", async () => {
+    const adminDueno = await createTestUser({ role: Rol.ADMIN });
+    try {
+      const app = buildApp();
+      await app.inject({
+        method: "POST",
+        url: "/auth/sync",
+        headers: { authorization: `Bearer ${adminDueno.accessToken}` },
+        payload: { email: adminDueno.email, nombre: "Admin Dueño Test" },
+      });
+      const usuarioAdminDueno = await prisma.usuario.findUniqueOrThrow({
+        where: { supabaseAuthId: adminDueno.supabaseAuthId },
+      });
+      await prisma.usuario.update({
+        where: { id: usuarioAdminDueno.id },
+        data: { rol: Rol.ADMIN },
+      });
+
+      const solicitudRes = await app.inject({
+        method: "POST",
+        url: "/comercios/solicitud",
+        headers: { authorization: `Bearer ${adminDueno.accessToken}` },
+        payload: { ...solicitudBase, categoriaId },
+      });
+      const comercioId = solicitudRes.json().comercio.id;
+
+      const verificarRes = await app.inject({
+        method: "POST",
+        url: `/admin/comercios/${comercioId}/verificar`,
+        headers: { authorization: `Bearer ${admin.accessToken}` },
+      });
+      expect(verificarRes.statusCode).toBe(200);
+
+      const usuarioTrasVerificar = await prisma.usuario.findUniqueOrThrow({
+        where: { id: usuarioAdminDueno.id },
+      });
+      expect(usuarioTrasVerificar.rol).toBe("ADMIN");
+    } finally {
+      await adminDueno.cleanup();
+    }
   }, 30000);
 });
