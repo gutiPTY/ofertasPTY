@@ -1,4 +1,6 @@
+import { REPUTACION_INSIGNIA_UMBRAL } from "@ofertaspty/shared-types";
 import { createClient } from "@/lib/supabase/server";
+import InsigniaColaboradorConfiable from "@/components/InsigniaColaboradorConfiable";
 import EditarOfertaForm from "./EditarOfertaForm";
 import {
   aprobarOferta,
@@ -30,7 +32,7 @@ interface OfertaPendiente {
   fechaVencimiento: string;
   categoriaId: string;
   categoria: { nombre: string };
-  creadoPor: { id: string; nombre: string; email: string; suspendido: boolean };
+  creadoPor: { id: string; nombre: string; email: string; suspendido: boolean; reputacion: number };
 }
 
 interface OfertaEnRevision extends OfertaPendiente {
@@ -137,8 +139,11 @@ function OfertaCard({
           {oferta.categoria.nombre} · {oferta.provincia} · vence{" "}
           {new Date(oferta.fechaVencimiento).toLocaleDateString("es-PA")}
         </p>
-        <p className="text-xs text-neutral-500">
+        <p className="flex items-center gap-1.5 text-xs text-neutral-500">
           Publicado por {oferta.creadoPor.nombre} ({oferta.creadoPor.email})
+          {oferta.creadoPor.reputacion >= REPUTACION_INSIGNIA_UMBRAL && (
+            <InsigniaColaboradorConfiable />
+          )}
         </p>
         {reportes && reportes.length > 0 && (
           <p className="text-xs text-red-600">
