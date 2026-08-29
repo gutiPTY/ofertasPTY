@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import FavoritoButton from "@/components/FavoritoButton";
 import ReportarButton from "@/components/ReportarButton";
@@ -34,9 +35,27 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const oferta = await getOferta(params.slug);
   if (!oferta) return {};
+
+  const descripcion = oferta.descripcion.slice(0, 160);
+  const url = `/ofertas/${params.slug}`;
+
   return {
-    title: `${oferta.titulo} — Encuentra Ofertas PTY`,
-    description: oferta.descripcion.slice(0, 160),
+    title: oferta.titulo,
+    description: descripcion,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "website",
+      title: oferta.titulo,
+      description: descripcion,
+      url,
+      images: [{ url: oferta.imagenUrl }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: oferta.titulo,
+      description: descripcion,
+      images: [oferta.imagenUrl],
+    },
   };
 }
 
@@ -46,8 +65,16 @@ export default async function OfertaDetallePage({ params }: { params: { slug: st
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-4 p-6">
-      {/* eslint-disable-next-line @next/next/no-img-element -- URL externa (Supabase Storage) */}
-      <img src={oferta.imagenUrl} alt={oferta.titulo} className="w-full rounded object-cover" />
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded">
+        <Image
+          src={oferta.imagenUrl}
+          alt={oferta.titulo}
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 672px"
+          className="object-cover"
+        />
+      </div>
 
       <div className="flex items-start justify-between gap-4">
         <div>

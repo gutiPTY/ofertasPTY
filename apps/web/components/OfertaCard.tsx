@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 interface OfertaCardProps {
@@ -21,8 +22,15 @@ export default function OfertaCard({
 }: OfertaCardProps) {
   return (
     <Link href={`/ofertas/${slug}`} className="flex flex-col overflow-hidden rounded border">
-      {/* eslint-disable-next-line @next/next/no-img-element -- URL externa (Supabase Storage) */}
-      <img src={imagenUrl} alt={titulo} className="h-40 w-full object-cover" />
+      <div className="relative h-40 w-full">
+        <Image
+          src={imagenUrl}
+          alt={titulo}
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+          className="object-cover"
+        />
+      </div>
       <div className="flex flex-col gap-1 p-3">
         <span className="text-xs text-neutral-500">
           {categoria.nombre} · {provincia}

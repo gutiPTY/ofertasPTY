@@ -15,9 +15,27 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
+const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
+const titulo = "Encuentra Ofertas PTY";
+const descripcion = "Ofertas de comercios en Panamá, moderadas por la comunidad.";
+
 export const metadata: Metadata = {
-  title: "Encuentra Ofertas PTY",
-  description: "Ofertas de comercios en Panamá, moderadas por la comunidad.",
+  metadataBase: new URL(siteUrl),
+  title: { default: titulo, template: `%s — ${titulo}` },
+  description: descripcion,
+  openGraph: {
+    type: "website",
+    locale: "es_PA",
+    siteName: titulo,
+    title: titulo,
+    description: descripcion,
+    url: siteUrl,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: titulo,
+    description: descripcion,
+  },
 };
 
 export default function RootLayout({
@@ -28,7 +46,7 @@ export default function RootLayout({
   const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
 
   return (
-    <html lang="en">
+    <html lang="es">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
