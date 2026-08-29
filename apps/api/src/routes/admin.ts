@@ -246,14 +246,29 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     { preHandler: requireAdmin },
     async (request, reply) => {
       const { id } = idParamsSchema.parse(request.params);
+      const comercio = await prisma.comercio.findUniqueOrThrow({
+        where: { id },
+        include: { usuario: true },
+      });
 
-      // No se toca Usuario.rol/app_metadata acá: nada en el backend
-      // condiciona el comportamiento de "ser comercio" a ese campo — la
-      // asociación automática de ofertas depende únicamente de
-      // Comercio.estado === "VERIFICADO" (ver routes/ofertas.ts). Sobreescribir
-      // el rol es puro riesgo sin beneficio: si el dueño del comercio ya
-      // tenía otro rol (ej. el propio admin probando el flujo con su
-      // cuenta real), lo perdía silenciosamente.
+      // Un ADMIN nunca pierde su rol acá, aunque sea dueño del comercio
+      // que se está verificando (pasa al probar el flujo con la propia
+      // cuenta real de admin — en producción no debería darse, porque el
+      // admin no se da de alta como comercio con su cuenta).
+      if (comercio.usuario.rol !== Rol.ADMIN) {
+        // El rol de negocio viaja en app_metadata del JWT de Supabase, no
+        // solo en la columna Usuario.rol (ver plugins/supabase-auth.ts) —
+        // hay que actualizar ambos lados.
+        const { error } = await supabaseAdmin.auth.admin.updateUserById(
+          comercio.usuario.supabaseAuthId,
+          { app_metadata: { role: Rol.COMERCIO } },
+        );
+        if (error) {
+          return reply.code(502).send({ error: "no_se_pudo_actualizar_rol" });
+        }
+        await prisma.usuario.update({ where: { id: comercio.usuarioId }, data: { rol: "COMERCIO" } });
+      }
+
       const actualizado = await prisma.comercio.update({
         where: { id },
         data: { estado: "VERIFICADO", motivoRechazo: null },

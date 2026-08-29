@@ -115,7 +115,7 @@ describe("/comercios", () => {
     expect(reenvio.json().comercio.estado).toBe("PENDIENTE");
   }, 15000);
 
-  it("POST /admin/comercios/:id/verificar marca el comercio como VERIFICADO sin tocar el rol del usuario", async () => {
+  it("POST /admin/comercios/:id/verificar promueve al usuario a rol COMERCIO", async () => {
     const app = buildApp();
     const usuario = await prisma.usuario.findUniqueOrThrow({
       where: { supabaseAuthId: solicitante.supabaseAuthId },
@@ -130,12 +130,8 @@ describe("/comercios", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json().comercio.estado).toBe("VERIFICADO");
 
-    // El rol de Usuario nunca se toca acá — nada depende de él para el
-    // comportamiento de "ser comercio" (ver comentario en admin.ts). Si el
-    // dueño del comercio ya era ADMIN (ej. probando con su propia cuenta),
-    // no debe perder ese rol al verificarse.
     const usuarioActualizado = await prisma.usuario.findUniqueOrThrow({ where: { id: usuario.id } });
-    expect(usuarioActualizado.rol).toBe("USUARIO");
+    expect(usuarioActualizado.rol).toBe("COMERCIO");
   }, 15000);
 
   it("una oferta creada por el comercio verificado queda asociada automáticamente", async () => {
