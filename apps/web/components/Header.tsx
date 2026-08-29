@@ -41,6 +41,9 @@ export default async function Header() {
             <Link href="/comercio/solicitud" className="rounded border px-3 py-1.5">
               Mi comercio
             </Link>
+            <Link href="/perfil" className="rounded border px-3 py-1.5">
+              Mi perfil
+            </Link>
             {role === "ADMIN" && (
               <Link href="/admin" className="rounded border px-3 py-1.5">
                 Panel admin

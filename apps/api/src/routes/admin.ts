@@ -88,7 +88,11 @@ export default async function adminRoutes(fastify: FastifyInstance) {
         // plan pago (ver Épica 5 / 01-PRD.md punto 6).
         const oferta = await tx.oferta.update({
           where: { id },
-          data: { estado: "PUBLICADA", destacada: existente.comercio?.planPago ?? false },
+          data: {
+            estado: "PUBLICADA",
+            destacada: existente.comercio?.planPago ?? false,
+            publicadaEn: new Date(),
+          },
           include: { creadoPor: true },
         });
         await tx.moderacion.create({
