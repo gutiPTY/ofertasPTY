@@ -17,3 +17,10 @@ export const EstadoOferta = {
   EN_REVISION: "EN_REVISION",
 } as const;
 export type EstadoOferta = (typeof EstadoOferta)[keyof typeof EstadoOferta];
+
+export const EstadoComercio = {
+  PENDIENTE: "PENDIENTE",
+  VERIFICADO: "VERIFICADO",
+  RECHAZADO: "RECHAZADO",
+} as const;
+export type EstadoComercio = (typeof EstadoComercio)[keyof typeof EstadoComercio];

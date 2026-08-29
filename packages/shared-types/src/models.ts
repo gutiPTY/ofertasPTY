@@ -1,4 +1,4 @@
-import type { Rol, EstadoOferta } from "./enums";
+import type { Rol, EstadoOferta, EstadoComercio } from "./enums";
 
 export interface Usuario {
   id: string;
@@ -14,9 +14,17 @@ export interface Comercio {
   id: string;
   nombre: string;
   categoriaId: string;
-  verificado: boolean;
+  usuarioId: string;
+  direccion: string;
+  ruc: string;
+  direccionFiscal: string;
+  representanteLegal: string;
+  estado: EstadoComercio;
+  motivoRechazo: string | null;
   planPago: boolean;
+  terminosAceptadosEn: string;
   creadoEn: string;
+  actualizadoEn: string;
 }
 
 export interface Categoria {

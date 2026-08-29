@@ -22,6 +22,12 @@ enum EstadoOferta {
   EN_REVISION
 }
 
+enum EstadoComercio {
+  PENDIENTE
+  VERIFICADO
+  RECHAZADO
+}
+
 model Usuario {
   id             String   @id @default(uuid())
   email          String   @unique
@@ -37,6 +43,8 @@ model Usuario {
   favoritos    Favorito[]
   moderaciones Moderacion[]         @relation("Moderador")
   preferencias PreferenciaUsuario[] // Épica 9: categorías/provincias favoritas para alertas
+  comercio     Comercio?
+  ediciones    OfertaEdicion[]      @relation("EdicionesAdmin")
 }
 
 // Épica 9 — Personalización y notificaciones
@@ -52,15 +60,33 @@ model PreferenciaUsuario {
   @@unique([usuarioId, categoriaId, provincia])
 }
 
+// Épica 5 — Comercios y plan freemium. Un comercio se da de alta por
+// autoservicio (usuario existente envía la solicitud con sus datos
+// fiscales) y queda PENDIENTE hasta que un admin lo verifica desde el
+// panel; ahí es cuando el usuario pasa a rol=COMERCIO. planPago se activa
+// a mano por el admin (no hay integración de pagos reales en el MVP, ver
+// CLAUDE.md/01-PRD.md).
 model Comercio {
-  id          String    @id @default(uuid())
-  nombre      String
-  categoria   Categoria @relation(fields: [categoriaId], references: [id])
-  categoriaId String
-  verificado  Boolean   @default(false)
-  planPago    Boolean   @default(false)
-  ofertas     Oferta[]
-  creadoEn    DateTime  @default(now())
+  id                   String         @id @default(uuid())
+  nombre               String
+  categoria            Categoria      @relation(fields: [categoriaId], references: [id])
+  categoriaId          String
+  usuario              Usuario        @relation(fields: [usuarioId], references: [id])
+  usuarioId            String         @unique
+  direccion            String
+  ruc                  String
+  direccionFiscal      String
+  representanteLegal   String
+  // Ruta dentro del bucket privado "comercio-docs" (NO es una URL pública,
+  // a diferencia de Oferta.imagenUrl). Se sirve solo vía URL firmada.
+  avisoOperacionesPath String
+  estado               EstadoComercio @default(PENDIENTE)
+  motivoRechazo        String?
+  planPago             Boolean        @default(false)
+  terminosAceptadosEn  DateTime
+  ofertas              Oferta[]
+  creadoEn             DateTime       @default(now())
+  actualizadoEn        DateTime       @updatedAt
 }
 
 model Categoria {
@@ -98,6 +124,7 @@ model Oferta {
   reportes     Reporte[]
   favoritos    Favorito[]
   moderaciones Moderacion[]
+  ediciones    OfertaEdicion[]
 
   creadoEn      DateTime @default(now())
   actualizadoEn DateTime @updatedAt
@@ -116,6 +143,21 @@ model Moderacion {
   decision    EstadoOferta // PUBLICADA o RECHAZADA
   motivo      String?
   fecha       DateTime     @default(now())
+}
+
+// Auditoría de correcciones del admin sobre el contenido de la oferta
+// (ej. precio o fecha mal cargados por el usuario), separada de Moderacion
+// porque no es una decisión de estado (PUBLICADA/RECHAZADA) sino un cambio
+// de contenido — solo permitido mientras la oferta sigue PENDIENTE o
+// EN_REVISION (ver routes/admin.ts).
+model OfertaEdicion {
+  id       String   @id @default(uuid())
+  oferta   Oferta   @relation(fields: [ofertaId], references: [id])
+  ofertaId String
+  admin    Usuario  @relation("EdicionesAdmin", fields: [adminId], references: [id])
+  adminId  String
+  cambios  Json // { campo: { anterior, nuevo } }
+  fecha    DateTime @default(now())
 }
 
 model Reporte {

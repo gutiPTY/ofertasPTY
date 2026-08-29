@@ -29,9 +29,16 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
   if (searchParams.q) params.set("q", searchParams.q);
   if (searchParams.page) params.set("page", searchParams.page);
 
-  const [feedRes, categoriasRes] = await Promise.all([
+  // La sección de destacadas solo se muestra en la home "limpia" (sin
+  // filtros ni paginación) para no repetir contenido en vistas filtradas.
+  const mostrarDestacadas = params.size === 0;
+
+  const [feedRes, categoriasRes, destacadasRes] = await Promise.all([
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/ofertas?${params.toString()}`, { cache: "no-store" }),
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/categorias`, { cache: "no-store" }),
+    mostrarDestacadas
+      ? fetch(`${process.env.NEXT_PUBLIC_API_URL}/ofertas/destacadas`, { cache: "no-store" })
+      : Promise.resolve(null),
   ]);
 
   const { ofertas, total, page, pageSize } = (await feedRes.json()) as {
@@ -41,6 +48,9 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
     pageSize: number;
   };
   const { categorias } = await categoriasRes.json();
+  const destacadas = destacadasRes
+    ? ((await destacadasRes.json()) as { ofertas: OfertaFeed[] }).ofertas
+    : [];
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -53,6 +63,17 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-4 p-6">
       <FiltrosFeed categorias={categorias} />
+
+      {destacadas.length > 0 && (
+        <section className="flex flex-col gap-3 rounded border border-amber-300 bg-amber-50 p-4">
+          <h2 className="text-lg font-semibold text-amber-900">⭐ Ofertas destacadas</h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+            {destacadas.map((oferta) => (
+              <OfertaCard key={oferta.id} {...oferta} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {ofertas.length === 0 && (
         <p className="py-12 text-center text-neutral-500">No hay ofertas que coincidan con la búsqueda.</p>

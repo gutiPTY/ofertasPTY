@@ -50,14 +50,14 @@ describe("/admin", () => {
       },
     });
     ofertaId = createRes.json().oferta.id;
-  });
+  }, 40000);
 
   afterAll(async () => {
     // Orden importa: borra primero la Moderacion (vía admin.cleanup, que
     // matchea por moderadorId) antes de que autor.cleanup borre la Oferta.
     await admin.cleanup();
     await autor.cleanup();
-  });
+  }, 30000);
 
   it("GET /admin/ofertas/pendientes rechaza a un usuario sin rol admin", async () => {
     const app = buildApp();
@@ -81,6 +81,36 @@ describe("/admin", () => {
     expect(ids).toContain(ofertaId);
   });
 
+  it("PATCH /admin/ofertas/:id edita campos y audita el cambio", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "PATCH",
+      url: `/admin/ofertas/${ofertaId}`,
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+      payload: { precioOferta: 42.5, titulo: "Oferta para moderar (corregida)" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().oferta.titulo).toBe("Oferta para moderar (corregida)");
+    expect(res.json().cambios.titulo).toBeDefined();
+    expect(res.json().cambios.precioOferta).toBeDefined();
+
+    const edicion = await prisma.ofertaEdicion.findFirst({ where: { ofertaId } });
+    expect(edicion?.adminId).toBeDefined();
+    expect((edicion?.cambios as Record<string, unknown>).titulo).toBeDefined();
+  }, 15000);
+
+  it("PATCH /admin/ofertas/:id no cambia nada si los valores enviados son iguales", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "PATCH",
+      url: `/admin/ofertas/${ofertaId}`,
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+      payload: { titulo: "Oferta para moderar (corregida)" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().cambios).toEqual({});
+  }, 15000);
+
   it("POST /admin/ofertas/:id/rechazar cambia el estado y audita la decisión", async () => {
     const app = buildApp();
     const res = await app.inject({
@@ -95,5 +125,16 @@ describe("/admin", () => {
     const moderacion = await prisma.moderacion.findFirst({ where: { ofertaId } });
     expect(moderacion?.decision).toBe("RECHAZADA");
     expect(moderacion?.motivo).toBe("Precio no verificable");
-  });
+  }, 15000);
+
+  it("PATCH /admin/ofertas/:id rechaza editar una oferta ya no editable (RECHAZADA)", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "PATCH",
+      url: `/admin/ofertas/${ofertaId}`,
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+      payload: { titulo: "Intento de edición tardía" },
+    });
+    expect(res.statusCode).toBe(409);
+  }, 15000);
 });

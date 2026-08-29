@@ -33,11 +33,11 @@ describe("/ofertas", () => {
       headers: { authorization: `Bearer ${user.accessToken}` },
       payload: { email: user.email, nombre: "Test User" },
     });
-  });
+  }, 40000);
 
   afterAll(async () => {
     await user.cleanup();
-  });
+  }, 30000);
 
   it("POST /ofertas rechaza sin token", async () => {
     const app = buildApp();
@@ -55,7 +55,7 @@ describe("/ofertas", () => {
     });
     expect(res.statusCode).toBe(201);
     expect(res.json().oferta.estado).toBe("PENDIENTE");
-  });
+  }, 15000);
 
   it("GET /ofertas/mine devuelve las ofertas del usuario autenticado", async () => {
     const app = buildApp();
@@ -66,7 +66,7 @@ describe("/ofertas", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(res.json().ofertas.length).toBeGreaterThan(0);
-  });
+  }, 15000);
 
   it("POST /ofertas respeta el límite de pendientes simultáneas", async () => {
     // Timeout alto: hace varias llamadas reales a Supabase en serie.
@@ -95,5 +95,5 @@ describe("/ofertas", () => {
       payload: ofertaPayload(categoriaId),
     });
     expect(res.statusCode).toBe(429);
-  }, 15000);
+  }, 60000);
 });
