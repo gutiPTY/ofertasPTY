@@ -4,6 +4,8 @@ import {
   EditarOfertaInputSchema,
   ModerarOfertaInputSchema,
   RechazarComercioInputSchema,
+  REPUTACION_PUNTOS_APROBACION,
+  REPUTACION_PUNTOS_RECHAZO,
   Rol,
 } from "@ofertaspty/shared-types";
 import { prisma } from "@ofertaspty/database";
@@ -44,7 +46,15 @@ export default async function adminRoutes(fastify: FastifyInstance) {
       // Se ordena en memoria: Prisma ordena por un campo de una relación
       // opcional con NULLS FIRST en DESC (comportamiento default de
       // Postgres), lo que dejaba las ofertas sin comercio primero.
-      ofertas.sort((a, b) => Number(b.comercio?.planPago ?? false) - Number(a.comercio?.planPago ?? false));
+      // Dentro de cada grupo de plan pago, prioriza revisar primero a los
+      // autores de menor reputación (Épica 10: mayor riesgo de contenido
+      // falso, ver 05-ROADMAP.md Fase 7).
+      ofertas.sort((a, b) => {
+        const planPagoDiff =
+          Number(b.comercio?.planPago ?? false) - Number(a.comercio?.planPago ?? false);
+        if (planPagoDiff !== 0) return planPagoDiff;
+        return a.creadoPor.reputacion - b.creadoPor.reputacion;
+      });
       return reply.send({ ofertas });
     },
   );
@@ -84,6 +94,10 @@ export default async function adminRoutes(fastify: FastifyInstance) {
         await tx.moderacion.create({
           data: { ofertaId: id, moderadorId: admin.id, decision: "PUBLICADA" },
         });
+        await tx.usuario.update({
+          where: { id: existente.creadoPorId },
+          data: { reputacion: { increment: REPUTACION_PUNTOS_APROBACION } },
+        });
         return oferta;
       });
 
@@ -115,6 +129,10 @@ export default async function adminRoutes(fastify: FastifyInstance) {
             decision: "RECHAZADA",
             motivo: body.motivo,
           },
+        });
+        await tx.usuario.update({
+          where: { id: oferta.creadoPorId },
+          data: { reputacion: { increment: REPUTACION_PUNTOS_RECHAZO } },
         });
         return oferta;
       });

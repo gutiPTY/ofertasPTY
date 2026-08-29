@@ -138,3 +138,120 @@ describe("/admin", () => {
     expect(res.statusCode).toBe(409);
   }, 15000);
 });
+
+describe("/admin — Épica 10 reputación de usuarios", () => {
+  let admin: Awaited<ReturnType<typeof createTestUser>>;
+  let autorRico: Awaited<ReturnType<typeof createTestUser>>;
+  let autorPobre: Awaited<ReturnType<typeof createTestUser>>;
+  let ofertaRicoId: string;
+  let ofertaPobreId: string;
+
+  async function crearOfertaPendiente(
+    autor: Awaited<ReturnType<typeof createTestUser>>,
+    categoriaId: string,
+  ) {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "POST",
+      url: "/ofertas",
+      headers: { authorization: `Bearer ${autor.accessToken}` },
+      payload: {
+        titulo: "Oferta reputación " + Math.random().toString(36).slice(2),
+        descripcion: "Descripción de prueba con más de diez caracteres",
+        imagenUrl: "https://example.com/a.jpg",
+        provincia: "Panamá",
+        fechaInicio: new Date().toISOString(),
+        fechaVencimiento: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        categoriaId,
+      },
+    });
+    return res.json().oferta.id as string;
+  }
+
+  beforeAll(async () => {
+    admin = await createTestUser({ role: Rol.ADMIN });
+    autorRico = await createTestUser();
+    autorPobre = await createTestUser();
+    const categoria = await prisma.categoria.findFirstOrThrow();
+
+    const app = buildApp();
+    for (const [usuario, nombre] of [
+      [admin, "Admin Reputación"],
+      [autorRico, "Autor Rico"],
+      [autorPobre, "Autor Pobre"],
+    ] as const) {
+      await app.inject({
+        method: "POST",
+        url: "/auth/sync",
+        headers: { authorization: `Bearer ${usuario.accessToken}` },
+        payload: { email: usuario.email, nombre },
+      });
+    }
+    await prisma.usuario.update({
+      where: { supabaseAuthId: admin.supabaseAuthId },
+      data: { rol: Rol.ADMIN },
+    });
+    // autorRico arranca con reputación alta simulada; autorPobre se queda
+    // en el default (0) para probar la priorización por bajo puntaje.
+    await prisma.usuario.update({
+      where: { supabaseAuthId: autorRico.supabaseAuthId },
+      data: { reputacion: 50 },
+    });
+
+    ofertaRicoId = await crearOfertaPendiente(autorRico, categoria.id);
+    ofertaPobreId = await crearOfertaPendiente(autorPobre, categoria.id);
+  }, 40000);
+
+  afterAll(async () => {
+    await admin.cleanup();
+    await autorRico.cleanup();
+    await autorPobre.cleanup();
+  }, 30000);
+
+  it("prioriza en la cola a los autores de menor reputación", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "GET",
+      url: "/admin/ofertas/pendientes",
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+    });
+    expect(res.statusCode).toBe(200);
+    const ids = res.json().ofertas.map((o: { id: string }) => o.id);
+    const idxPobre = ids.indexOf(ofertaPobreId);
+    const idxRico = ids.indexOf(ofertaRicoId);
+    expect(idxPobre).toBeGreaterThanOrEqual(0);
+    expect(idxRico).toBeGreaterThanOrEqual(0);
+    expect(idxPobre).toBeLessThan(idxRico);
+  }, 15000);
+
+  it("aprobar una oferta suma puntos de reputación al autor", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "POST",
+      url: `/admin/ofertas/${ofertaPobreId}/aprobar`,
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+    });
+    expect(res.statusCode).toBe(200);
+
+    const usuario = await prisma.usuario.findUniqueOrThrow({
+      where: { supabaseAuthId: autorPobre.supabaseAuthId },
+    });
+    expect(usuario.reputacion).toBe(5);
+  }, 15000);
+
+  it("rechazar una oferta resta puntos de reputación al autor", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "POST",
+      url: `/admin/ofertas/${ofertaRicoId}/rechazar`,
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+      payload: { motivo: "Prueba de reputación" },
+    });
+    expect(res.statusCode).toBe(200);
+
+    const usuario = await prisma.usuario.findUniqueOrThrow({
+      where: { supabaseAuthId: autorRico.supabaseAuthId },
+    });
+    expect(usuario.reputacion).toBe(45);
+  }, 15000);
+});

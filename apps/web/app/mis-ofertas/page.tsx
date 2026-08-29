@@ -1,5 +1,11 @@
 import { redirect } from "next/navigation";
+import { REPUTACION_INSIGNIA_UMBRAL } from "@ofertaspty/shared-types";
 import { createClient } from "@/lib/supabase/server";
+import InsigniaColaboradorConfiable from "@/components/InsigniaColaboradorConfiable";
+
+interface Usuario {
+  reputacion: number;
+}
 
 interface OfertaConModeracion {
   id: string;
@@ -29,15 +35,28 @@ export default async function MisOfertasPage() {
     redirect("/login");
   }
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ofertas/mine`, {
-    headers: { Authorization: `Bearer ${session.access_token}` },
-    cache: "no-store",
-  });
-  const { ofertas } = (await res.json()) as { ofertas: OfertaConModeracion[] };
+  const [ofertasRes, meRes] = await Promise.all([
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/ofertas/mine`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      cache: "no-store",
+    }),
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      cache: "no-store",
+    }),
+  ]);
+  const { ofertas } = (await ofertasRes.json()) as { ofertas: OfertaConModeracion[] };
+  const { usuario } = (await meRes.json()) as { usuario: Usuario };
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 p-6">
-      <h1 className="text-xl font-semibold">Mis ofertas</h1>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-xl font-semibold">Mis ofertas</h1>
+        <div className="flex items-center gap-1.5 text-sm text-neutral-600">
+          <span>{usuario.reputacion} pts</span>
+          {usuario.reputacion >= REPUTACION_INSIGNIA_UMBRAL && <InsigniaColaboradorConfiable />}
+        </div>
+      </div>
       {ofertas.length === 0 && <p className="text-neutral-600">Todavía no publicaste ninguna oferta.</p>}
       <ul className="flex flex-col gap-3">
         {ofertas.map((oferta) => (
