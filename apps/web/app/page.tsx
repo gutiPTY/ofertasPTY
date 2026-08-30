@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import HeroCarousel from "@/components/HeroCarousel";
@@ -108,17 +107,17 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
           )}
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {ofertas.map((oferta, index) => (
-              <Fragment key={oferta.id}>
-                <OfertaCard {...oferta} />
-                {index === 3 && ofertas.length > 4 && (
-                  <div className="col-span-full">
-                    <AdUnit slot="4882093875" format="fluid" layoutKey="-fb+5w+4e-db+86" />
-                  </div>
-                )}
-              </Fragment>
+            {ofertas.map((oferta) => (
+              <OfertaCard key={oferta.id} {...oferta} />
             ))}
           </div>
+
+          {/* Fuera de la grilla a propósito: si AdSense no tiene relleno
+              para mostrar, el hueco queda en su propia franja en vez de
+              romper la simetría de las tarjetas de ofertas. */}
+          {ofertas.length > 4 && (
+            <AdUnit slot="4882093875" format="fluid" layoutKey="-fb+5w+4e-db+86" />
+          )}
 
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 pt-4 text-sm">
