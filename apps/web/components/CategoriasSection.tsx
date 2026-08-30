@@ -10,7 +10,7 @@ export default function CategoriasSection({ categorias }: { categorias: Categori
   return (
     <section className="mx-auto mt-10 max-w-6xl px-4 sm:px-6">
       <h2 className="mb-4 font-display text-xl font-semibold text-ink">Comprá por categoría</h2>
-      <div className="grid grid-cols-4 gap-4 sm:grid-cols-8">
+      <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-8">
         {categorias.map((categoria) => {
           const { bg } = categoriaColor(categoria.nombre);
           return (
