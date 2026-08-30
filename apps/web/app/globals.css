@@ -3,21 +3,47 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: var(--paper);
+  --foreground: var(--ink);
+
+  --ink: #1b1512;
+  --paper: #fbf7f1;
+  --surface: #f3ebe0;
+  --surface-2: #eee3d4;
+  --line: #e3d6c3;
+  --muted: #7a6f61;
+
+  --ember: #d6401f;
+  --ember-ink: #ffffff;
+  --flare: #f2762e;
+  --spark: #ffc53d;
+
+  --success: #3f7d53;
+  --success-bg: #e6f0e8;
+  --warning: #b9791a;
+  --warning-bg: #faedd8;
+  --critical: #b23a48;
+  --critical-bg: #f6e3e3;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --ink: #f6efe4;
+    --paper: #201a15;
+    --surface: #29221c;
+    --surface-2: #322922;
+    --line: #423628;
+    --muted: #b3a696;
+    --ember-ink: #fff8f1;
+    --success-bg: #1d2c20;
+    --warning-bg: #2e2210;
+    --critical-bg: #2f1c1d;
   }
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 @layer utilities {

@@ -51,6 +51,8 @@ export const FiltrosFeedSchema = z.object({
   categoriaId: z.string().uuid().optional(),
   provincia: z.enum(PROVINCIAS_PANAMA).optional(),
   q: z.string().min(1).max(120).optional(),
+  precioMin: z.coerce.number().nonnegative().optional(),
+  precioMax: z.coerce.number().positive().optional(),
   page: z.coerce.number().int().positive().default(1),
 });
 export type FiltrosFeed = z.infer<typeof FiltrosFeedSchema>;

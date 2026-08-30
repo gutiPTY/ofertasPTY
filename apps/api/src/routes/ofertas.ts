@@ -107,6 +107,14 @@ export default async function ofertasRoutes(fastify: FastifyInstance) {
             ],
           }
         : {}),
+      ...(filtros.precioMin !== undefined || filtros.precioMax !== undefined
+        ? {
+            precioOferta: {
+              ...(filtros.precioMin !== undefined ? { gte: filtros.precioMin } : {}),
+              ...(filtros.precioMax !== undefined ? { lte: filtros.precioMax } : {}),
+            },
+          }
+        : {}),
     };
 
     const [ofertas, total] = await Promise.all([

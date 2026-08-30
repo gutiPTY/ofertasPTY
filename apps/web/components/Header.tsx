@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import Logo from "@/components/Logo";
 import LogoutButton from "@/components/LogoutButton";
+import SearchBox from "@/components/SearchBox";
+
+interface Categoria {
+  id: string;
+  nombre: string;
+}
 
 export default async function Header() {
   const supabase = createClient();
@@ -20,49 +27,76 @@ export default async function Header() {
     }
   }
 
-  return (
-    <header className="border-b">
-      <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 p-4">
-        <Link href="/" className="text-lg font-semibold">
-          Encuentra Ofertas PTY
-        </Link>
+  const categoriasRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categorias`, {
+    cache: "no-store",
+  }).catch(() => null);
+  const categorias: Categoria[] = categoriasRes?.ok
+    ? (await categoriasRes.json()).categorias.slice(0, 5)
+    : [];
 
-        {user ? (
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <Link href="/publicar" className="rounded bg-black px-3 py-1.5 text-white">
-              Publicar oferta
-            </Link>
-            <Link href="/mis-ofertas" className="rounded border px-3 py-1.5">
-              Mis ofertas
-            </Link>
-            <Link href="/favoritos" className="rounded border px-3 py-1.5">
-              Favoritos
-            </Link>
-            <Link href="/comercio/solicitud" className="rounded border px-3 py-1.5">
-              Mi comercio
-            </Link>
-            <Link href="/perfil" className="rounded border px-3 py-1.5">
-              Mi perfil
-            </Link>
-            {role === "ADMIN" && (
-              <Link href="/admin" className="rounded border px-3 py-1.5">
-                Panel admin
+  return (
+    <div className="border-b border-line bg-paper">
+      <div className="border-b border-line bg-surface-2">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-end gap-4 px-4 py-1.5 text-xs text-muted sm:px-6">
+          {user ? (
+            <>
+              <Link href="/mis-ofertas" className="hover:text-ink">
+                Mis ofertas
               </Link>
-            )}
-            <span className="text-neutral-500">{user.email}</span>
-            <LogoutButton />
-          </div>
-        ) : (
-          <div className="flex gap-2 text-sm">
-            <Link href="/login" className="rounded bg-black px-3 py-1.5 text-white">
-              Ingresar
-            </Link>
-            <Link href="/registro" className="rounded border px-3 py-1.5">
-              Crear cuenta
-            </Link>
-          </div>
-        )}
+              <Link href="/favoritos" className="hover:text-ink">
+                Favoritos
+              </Link>
+              <Link href="/comercio/solicitud" className="hover:text-ink">
+                Mi comercio
+              </Link>
+              <Link href="/perfil" className="hover:text-ink">
+                Mi perfil
+              </Link>
+              {role === "ADMIN" && (
+                <Link href="/admin" className="hover:text-ink">
+                  Panel admin
+                </Link>
+              )}
+              <span>{user.email}</span>
+              <LogoutButton />
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="hover:text-ink">
+                Ingresar
+              </Link>
+              <Link href="/registro" className="font-semibold hover:text-ink">
+                Crear cuenta
+              </Link>
+            </>
+          )}
+        </div>
       </div>
-    </header>
+
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-6 px-4 py-4 sm:px-6">
+        <Logo />
+
+        <nav className="hidden flex-1 items-center gap-6 text-sm font-semibold text-ink/85 md:flex">
+          {categorias.map((categoria) => (
+            <Link
+              key={categoria.id}
+              href={`/?categoriaId=${categoria.id}`}
+              className="hover:text-ember"
+            >
+              {categoria.nombre}
+            </Link>
+          ))}
+        </nav>
+
+        <SearchBox />
+
+        <Link
+          href="/publicar"
+          className="ml-auto shrink-0 rounded-full bg-ember px-4 py-2 text-sm font-bold text-ember-ink transition hover:brightness-95 md:ml-0"
+        >
+          Publicar oferta
+        </Link>
+      </div>
+    </div>
   );
 }

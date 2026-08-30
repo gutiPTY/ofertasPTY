@@ -67,6 +67,19 @@ describe("feed público", () => {
       payload: payload("Oferta pendiente no visible"),
     });
     ofertaPendienteSlug = pendienteRes.json().oferta.slug;
+
+    const conPrecioRes = await app.inject({
+      method: "POST",
+      url: "/ofertas",
+      headers: { authorization: `Bearer ${autor.accessToken}` },
+      payload: { ...payload("OfertaFeedConPrecioXYZ"), precioOferta: 15 },
+    });
+    const ofertaConPrecioId = conPrecioRes.json().oferta.id;
+    await app.inject({
+      method: "POST",
+      url: `/admin/ofertas/${ofertaConPrecioId}/aprobar`,
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+    });
   }, 15000);
 
   afterAll(async () => {
@@ -81,6 +94,21 @@ describe("feed público", () => {
     const { ofertas } = res.json();
     expect(ofertas.some((o: { id: string }) => o.id === ofertaPublicadaId)).toBe(true);
     expect(ofertas.every((o: { estado: string }) => o.estado === "PUBLICADA")).toBe(true);
+  });
+
+  it("GET /ofertas filtra por rango de precio (precioMin/precioMax)", async () => {
+    const app = buildApp();
+    const dentro = await app.inject({
+      method: "GET",
+      url: "/ofertas?q=OfertaFeedConPrecioXYZ&precioMin=10&precioMax=25",
+    });
+    expect(dentro.json().ofertas.length).toBe(1);
+
+    const fuera = await app.inject({
+      method: "GET",
+      url: "/ofertas?q=OfertaFeedConPrecioXYZ&precioMin=20",
+    });
+    expect(fuera.json().ofertas.length).toBe(0);
   });
 
   it("GET /ofertas/:slug devuelve la oferta publicada", async () => {
