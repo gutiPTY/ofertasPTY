@@ -25,14 +25,14 @@ export default function HeroCarousel({ slides }: { slides: Slide[] }) {
             key={slide.slug}
             href={`/ofertas/${slide.slug}`}
             onMouseEnter={() => setActive(index)}
-            className="group relative flex h-64 flex-col justify-end overflow-hidden rounded-2xl p-5 text-white"
+            className="group relative flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-2xl bg-surface-2 p-5 text-white"
           >
             <Image
               src={slide.imagenUrl}
               alt={slide.titulo}
               fill
               sizes="(max-width: 640px) 100vw, 33vw"
-              className="object-cover transition duration-300 group-hover:scale-105"
+              className="object-cover object-top transition duration-300 group-hover:scale-105"
               priority={index === 0}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />

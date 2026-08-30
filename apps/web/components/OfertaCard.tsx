@@ -28,13 +28,13 @@ export default function OfertaCard({
       href={`/ofertas/${slug}`}
       className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition hover:-translate-y-0.5 hover:shadow-md"
     >
-      <div className="relative h-36 w-full">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-2">
         <Image
           src={imagenUrl}
           alt={titulo}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-          className="object-cover"
+          className="object-cover object-top"
         />
         <span
           className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-bold text-white"
