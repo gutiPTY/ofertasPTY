@@ -4,24 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import CategoriaIcon, { categoriaColor } from "@/components/CategoriaIcon";
 import OfertaDetalleModal, { type OfertaDetalleData } from "@/components/OfertaDetalleModal";
-
-type Estado = OfertaDetalleData["estado"];
-
-const ESTADO_LABEL: Record<Estado, string> = {
-  PENDIENTE: "Pendiente",
-  PUBLICADA: "Publicada",
-  RECHAZADA: "Rechazada",
-  EXPIRADA: "Expirada",
-  EN_REVISION: "En revisión",
-};
-
-const ESTADO_BADGE: Record<Estado, string> = {
-  PENDIENTE: "bg-warning-bg text-warning",
-  EN_REVISION: "bg-warning-bg text-warning",
-  PUBLICADA: "bg-success-bg text-success",
-  RECHAZADA: "bg-critical-bg text-critical",
-  EXPIRADA: "bg-surface-2 text-muted",
-};
+import { ESTADO_BADGE, ESTADO_LABEL } from "@/lib/ofertaEstado";
 
 export default function MisOfertasListado({ ofertas }: { ofertas: OfertaDetalleData[] }) {
   const [seleccionada, setSeleccionada] = useState<OfertaDetalleData | null>(null);

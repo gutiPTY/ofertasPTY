@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
-import { CrearOfertaInputSchema, PROVINCIAS_PANAMA } from "@ofertaspty/shared-types";
+import { CrearOfertaInputSchema, DIAS_SEMANA_ORDEN, DIA_SEMANA_LABEL, PROVINCIAS_PANAMA } from "@ofertaspty/shared-types";
 import { createClient } from "@/lib/supabase/client";
 
 interface Categoria {
@@ -96,6 +96,7 @@ export default function PublicarPage() {
         fechaInicio: formData.get("fechaInicio"),
         fechaVencimiento: formData.get("fechaVencimiento"),
         categoriaId: formData.get("categoriaId"),
+        diaSemana: formData.get("diaSemana") || undefined,
       };
 
       const parsed = CrearOfertaInputSchema.safeParse(raw);
@@ -211,6 +212,17 @@ export default function PublicarPage() {
             </option>
           ))}
         </select>
+        <label className="text-sm text-neutral-600">
+          Día específico de la semana (opcional — solo si es una promo recurrente, ej. &quot;Miércoles de Descuento&quot;)
+          <select name="diaSemana" className="mt-1 w-full rounded border px-3 py-2" defaultValue="">
+            <option value="">No aplica</option>
+            {DIAS_SEMANA_ORDEN.map((dia) => (
+              <option key={dia} value={dia}>
+                {DIA_SEMANA_LABEL[dia]}
+              </option>
+            ))}
+          </select>
+        </label>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button
           type="submit"

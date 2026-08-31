@@ -1,5 +1,8 @@
 import { z } from "zod";
 import { PROVINCIAS_PANAMA } from "../provincias";
+import { DiaSemana } from "../enums";
+
+const DIA_SEMANA_VALUES = Object.values(DiaSemana) as [DiaSemana, ...DiaSemana[]];
 
 const OfertaCamposSchema = z.object({
   titulo: z.string().min(3).max(120),
@@ -14,6 +17,10 @@ const OfertaCamposSchema = z.object({
   fechaInicio: z.coerce.date(),
   fechaVencimiento: z.coerce.date(),
   categoriaId: z.string().uuid(),
+  // Épica 9: solo si la oferta es una promo recurrente de un día fijo a la
+  // semana (ej. "Miércoles de Descuento"). Nullable para poder limpiarlo
+  // al editar.
+  diaSemana: z.enum(DIA_SEMANA_VALUES).nullable().optional(),
 });
 
 export const CrearOfertaInputSchema = OfertaCamposSchema.refine(

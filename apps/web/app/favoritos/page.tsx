@@ -1,20 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import OfertaCard from "@/components/OfertaCard";
-
-interface FavoritoConOferta {
-  id: string;
-  oferta: {
-    id: string;
-    slug: string;
-    titulo: string;
-    imagenUrl: string;
-    provincia: string;
-    precioOferta: string | null;
-    precioOriginal: string | null;
-    categoria: { nombre: string };
-  };
-}
+import FavoritosListado, { type FavoritoConOferta } from "./FavoritosListado";
 
 export default async function FavoritosPage() {
   const supabase = createClient();
@@ -35,16 +21,15 @@ export default async function FavoritosPage() {
   const favoritos = res.ok ? ((await res.json()) as { favoritos: FavoritoConOferta[] }).favoritos : [];
 
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-4 p-6">
-      <h1 className="text-xl font-semibold">Mis favoritos</h1>
-      {favoritos.length === 0 && (
-        <p className="text-neutral-600">Todavía no guardaste ninguna oferta como favorita.</p>
-      )}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-        {favoritos.map((f) => (
-          <OfertaCard key={f.id} {...f.oferta} />
-        ))}
+    <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <div>
+        <h1 className="font-display text-2xl font-semibold text-ink">Mis favoritos</h1>
+        <p className="text-sm text-muted">
+          {favoritos.length} {favoritos.length === 1 ? "oferta guardada" : "ofertas guardadas"}
+        </p>
       </div>
+
+      <FavoritosListado favoritos={favoritos} />
     </main>
   );
 }

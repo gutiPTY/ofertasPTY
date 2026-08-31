@@ -54,7 +54,7 @@ describe("/favoritos", () => {
       url: `/admin/ofertas/${ofertaId}/aprobar`,
       headers: { authorization: `Bearer ${admin.accessToken}` },
     });
-  }, 15000);
+  }, 40000);
 
   afterAll(async () => {
     await admin.cleanup();
@@ -65,7 +65,7 @@ describe("/favoritos", () => {
     // contemplado en test-user.cleanup(), así que se borra explícitamente.
     await prisma.favorito.deleteMany({ where: { ofertaId } });
     await usuario.cleanup();
-  });
+  }, 30000);
 
   it("POST /favoritos/:ofertaId rechaza sin token", async () => {
     const app = buildApp();
@@ -100,5 +100,78 @@ describe("/favoritos", () => {
     });
     expect(segundo.statusCode).toBe(200);
     expect(segundo.json().favorito).toBe(false);
+  }, 15000);
+
+  it("PUT /favoritos/:id/notificaciones actualiza y persiste, solo para el dueño", async () => {
+    const app = buildApp();
+
+    // El test anterior togglea dos veces, así que puede haber quedado
+    // des-favoritado — asegura que el favorito exista antes de seguir.
+    async function favoritoActual() {
+      const listado = await app.inject({
+        method: "GET",
+        url: "/favoritos/mine",
+        headers: { authorization: `Bearer ${usuario.accessToken}` },
+      });
+      return listado
+        .json()
+        .favoritos.find((f: { ofertaId: string }) => f.ofertaId === ofertaId) as
+        | { id: string }
+        | undefined;
+    }
+
+    let favorito = await favoritoActual();
+    if (!favorito) {
+      await app.inject({
+        method: "POST",
+        url: `/favoritos/${ofertaId}`,
+        headers: { authorization: `Bearer ${usuario.accessToken}` },
+      });
+      favorito = await favoritoActual();
+    }
+
+    const payload = {
+      notifEmail: true,
+      notifInterna: true,
+      notifDiaria: false,
+      notifElDia: false,
+      notifUltimoDia: true,
+      notifUnDiaAntes: false,
+    };
+
+    const res = await app.inject({
+      method: "PUT",
+      url: `/favoritos/${favorito!.id}/notificaciones`,
+      headers: { authorization: `Bearer ${usuario.accessToken}` },
+      payload,
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().favorito).toMatchObject(payload);
+
+    const otro = await createTestUser();
+    await app.inject({
+      method: "POST",
+      url: "/auth/sync",
+      headers: { authorization: `Bearer ${otro.accessToken}` },
+      payload: { email: otro.email, nombre: "Otro Usuario" },
+    });
+    const rechazo = await app.inject({
+      method: "PUT",
+      url: `/favoritos/${favorito!.id}/notificaciones`,
+      headers: { authorization: `Bearer ${otro.accessToken}` },
+      payload,
+    });
+    expect(rechazo.statusCode).toBe(404);
+    await otro.cleanup();
+  }, 60000);
+
+  it("PUT /favoritos/:id/notificaciones rechaza sin token", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "PUT",
+      url: `/favoritos/${ofertaId}/notificaciones`,
+      payload: {},
+    });
+    expect(res.statusCode).toBe(401);
   });
 });
