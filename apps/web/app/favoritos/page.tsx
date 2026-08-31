@@ -30,7 +30,9 @@ export default async function FavoritosPage() {
     headers: { Authorization: `Bearer ${session.access_token}` },
     cache: "no-store",
   });
-  const { favoritos } = (await res.json()) as { favoritos: FavoritoConOferta[] };
+  // res puede ser 404 "usuario_no_sincronizado" si el usuario nunca pasó
+  // por /auth/sync (ver login/page.tsx) — no asumir que la respuesta trae favoritos.
+  const favoritos = res.ok ? ((await res.json()) as { favoritos: FavoritoConOferta[] }).favoritos : [];
 
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-4 p-6">

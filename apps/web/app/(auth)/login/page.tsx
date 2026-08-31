@@ -25,15 +25,37 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    const { error: signInError } = await supabase.auth.signInWithPassword(parsed.data);
-
-    setLoading(false);
+    const { data, error: signInError } = await supabase.auth.signInWithPassword(parsed.data);
 
     if (signInError) {
+      setLoading(false);
       setError(signInError.message);
       return;
     }
 
+    // Cubre el caso de usuarios que se registraron con confirmación de
+    // email requerida: en /registro no había sesión todavía, así que
+    // nunca se sincronizaron con la tabla Usuario. /auth/sync es
+    // idempotente (upsert), así que llamarlo en cada login es seguro.
+    if (data.session && data.user) {
+      const nombre =
+        (data.user.user_metadata?.nombre as string | undefined) ??
+        (data.user.user_metadata?.full_name as string | undefined) ??
+        (data.user.user_metadata?.name as string | undefined) ??
+        data.user.email ??
+        "Usuario";
+
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/sync`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session.access_token}`,
+        },
+        body: JSON.stringify({ email: data.user.email, nombre }),
+      });
+    }
+
+    setLoading(false);
     router.push("/");
     router.refresh();
   }
