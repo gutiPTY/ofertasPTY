@@ -46,16 +46,22 @@ export default async function MisOfertasPage() {
     }),
   ]);
   const { ofertas } = (await ofertasRes.json()) as { ofertas: OfertaConModeracion[] };
-  const { usuario } = (await meRes.json()) as { usuario: Usuario };
+  // meRes puede ser 404 "usuario_no_sincronizado" si el usuario nunca
+  // pasó por /auth/sync (ver login/page.tsx) — no asumir que existe.
+  const usuario: Usuario | null = meRes.ok
+    ? ((await meRes.json()) as { usuario: Usuario }).usuario
+    : null;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 p-6">
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-xl font-semibold">Mis ofertas</h1>
-        <div className="flex items-center gap-1.5 text-sm text-neutral-600">
-          <span>{usuario.reputacion} pts</span>
-          {usuario.reputacion >= REPUTACION_INSIGNIA_UMBRAL && <InsigniaColaboradorConfiable />}
-        </div>
+        {usuario && (
+          <div className="flex items-center gap-1.5 text-sm text-neutral-600">
+            <span>{usuario.reputacion} pts</span>
+            {usuario.reputacion >= REPUTACION_INSIGNIA_UMBRAL && <InsigniaColaboradorConfiable />}
+          </div>
+        )}
       </div>
       {ofertas.length === 0 && <p className="text-neutral-600">Todavía no publicaste ninguna oferta.</p>}
       <ul className="flex flex-col gap-3">
