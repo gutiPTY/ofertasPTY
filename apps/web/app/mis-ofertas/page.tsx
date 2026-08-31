@@ -1,29 +1,14 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { REPUTACION_INSIGNIA_UMBRAL } from "@ofertaspty/shared-types";
 import { createClient } from "@/lib/supabase/server";
 import InsigniaColaboradorConfiable from "@/components/InsigniaColaboradorConfiable";
+import type { OfertaDetalleData } from "@/components/OfertaDetalleModal";
+import MisOfertasListado from "./MisOfertasListado";
 
 interface Usuario {
   reputacion: number;
 }
-
-interface OfertaConModeracion {
-  id: string;
-  titulo: string;
-  imagenUrl: string;
-  estado: "PENDIENTE" | "PUBLICADA" | "RECHAZADA" | "EXPIRADA" | "EN_REVISION";
-  creadoEn: string;
-  categoria: { nombre: string };
-  moderaciones: { motivo: string | null }[];
-}
-
-const ESTADO_LABEL: Record<OfertaConModeracion["estado"], string> = {
-  PENDIENTE: "Pendiente",
-  PUBLICADA: "Publicada",
-  RECHAZADA: "Rechazada",
-  EXPIRADA: "Expirada",
-  EN_REVISION: "En revisión",
-};
 
 export default async function MisOfertasPage() {
   const supabase = createClient();
@@ -45,7 +30,7 @@ export default async function MisOfertasPage() {
       cache: "no-store",
     }),
   ]);
-  const { ofertas } = (await ofertasRes.json()) as { ofertas: OfertaConModeracion[] };
+  const { ofertas } = (await ofertasRes.json()) as { ofertas: OfertaDetalleData[] };
   // meRes puede ser 404 "usuario_no_sincronizado" si el usuario nunca
   // pasó por /auth/sync (ver login/page.tsx) — no asumir que existe.
   const usuario: Usuario | null = meRes.ok
@@ -53,33 +38,31 @@ export default async function MisOfertasPage() {
     : null;
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 p-6">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold">Mis ofertas</h1>
-        {usuario && (
-          <div className="flex items-center gap-1.5 text-sm text-neutral-600">
-            <span>{usuario.reputacion} pts</span>
-            {usuario.reputacion >= REPUTACION_INSIGNIA_UMBRAL && <InsigniaColaboradorConfiable />}
-          </div>
-        )}
-      </div>
-      {ofertas.length === 0 && <p className="text-neutral-600">Todavía no publicaste ninguna oferta.</p>}
-      <ul className="flex flex-col gap-3">
-        {ofertas.map((oferta) => (
-          <li key={oferta.id} className="rounded border p-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-medium">{oferta.titulo}</span>
-              <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs">
-                {ESTADO_LABEL[oferta.estado]}
-              </span>
+    <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-ink">Mis ofertas</h1>
+          <p className="text-sm text-muted">
+            {ofertas.length} {ofertas.length === 1 ? "oferta publicada" : "ofertas publicadas"}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {usuario && (
+            <div className="flex items-center gap-1.5 text-sm text-muted">
+              <span>{usuario.reputacion} pts</span>
+              {usuario.reputacion >= REPUTACION_INSIGNIA_UMBRAL && <InsigniaColaboradorConfiable />}
             </div>
-            <p className="text-sm text-neutral-500">{oferta.categoria.nombre}</p>
-            {oferta.estado === "RECHAZADA" && oferta.moderaciones[0]?.motivo && (
-              <p className="mt-1 text-sm text-red-600">Motivo: {oferta.moderaciones[0].motivo}</p>
-            )}
-          </li>
-        ))}
-      </ul>
+          )}
+          <Link
+            href="/publicar"
+            className="rounded-full bg-ember px-4 py-2 text-sm font-bold text-ember-ink transition hover:brightness-95"
+          >
+            Publicar oferta
+          </Link>
+        </div>
+      </div>
+
+      <MisOfertasListado ofertas={ofertas} />
     </main>
   );
 }
