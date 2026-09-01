@@ -16,6 +16,7 @@
     "seed": "prisma db seed",
     "promote-admin": "tsx scripts/promote-admin.ts",
     "create-storage-bucket": "tsx scripts/create-storage-bucket.ts",
+    "enable-rls": "tsx scripts/enable-rls.ts",
     "postinstall": "prisma generate",
     "lint": "eslint .",
     "check-types": "tsc --noEmit"
