@@ -287,4 +287,67 @@ describe("/comercios", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json().ok).toBe(true);
   }, 15000);
+
+  it("PATCH /comercios/mi-logo rechaza sin token", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "PATCH",
+      url: "/comercios/mi-logo",
+      payload: { logoUrl: "https://example.com/logo.png" },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("PATCH /comercios/mi-logo rechaza si el usuario no tiene comercio", async () => {
+    const sinComercio = await createTestUser();
+    try {
+      const app = buildApp();
+      await app.inject({
+        method: "POST",
+        url: "/auth/sync",
+        headers: { authorization: `Bearer ${sinComercio.accessToken}` },
+        payload: { email: sinComercio.email, nombre: "Sin Comercio Test" },
+      });
+
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/comercios/mi-logo",
+        headers: { authorization: `Bearer ${sinComercio.accessToken}` },
+        payload: { logoUrl: "https://example.com/logo.png" },
+      });
+      expect(res.statusCode).toBe(404);
+      expect(res.json().error).toBe("sin_comercio");
+    } finally {
+      await sinComercio.cleanup();
+    }
+  }, 20000);
+
+  it("PATCH /comercios/mi-logo guarda la URL del logo", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "PATCH",
+      url: "/comercios/mi-logo",
+      headers: { authorization: `Bearer ${solicitante.accessToken}` },
+      payload: { logoUrl: "https://example.com/nuevo-logo.png" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().comercio.logoUrl).toBe("https://example.com/nuevo-logo.png");
+
+    const usuario = await prisma.usuario.findUniqueOrThrow({
+      where: { supabaseAuthId: solicitante.supabaseAuthId },
+    });
+    const comercio = await prisma.comercio.findUniqueOrThrow({ where: { usuarioId: usuario.id } });
+    expect(comercio.logoUrl).toBe("https://example.com/nuevo-logo.png");
+  }, 15000);
+
+  it("PATCH /comercios/mi-logo rechaza una URL inválida", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "PATCH",
+      url: "/comercios/mi-logo",
+      headers: { authorization: `Bearer ${solicitante.accessToken}` },
+      payload: { logoUrl: "no-es-una-url" },
+    });
+    expect(res.statusCode).toBe(500);
+  }, 15000);
 });
