@@ -3,7 +3,12 @@ import { env } from "../env.js";
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
-export async function sendEmail(opts: { to: string; subject: string; html: string }) {
+export async function sendEmail(opts: {
+  to: string | string[];
+  subject: string;
+  html: string;
+  replyTo?: string;
+}) {
   if (env.NODE_ENV === "test") {
     // No mandar emails reales durante la suite de tests (spam a inboxes
     // reales de los usuarios sintéticos +test-... y una dependencia de red
@@ -24,6 +29,7 @@ export async function sendEmail(opts: { to: string; subject: string; html: strin
     to: opts.to,
     subject: opts.subject,
     html: opts.html,
+    ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
   });
   if (error) {
     // No se relanza: un email que falla no debe tumbar la decisión de

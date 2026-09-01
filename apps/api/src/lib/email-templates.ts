@@ -115,6 +115,43 @@ export function emailDigestPreferencias(ofertas: OfertaDigest[]) {
   };
 }
 
+// Épica 5 — el comercio escribe texto libre, a diferencia del resto de los
+// templates (títulos, motivos cortos ya validados por otros flujos) — hay
+// que escapar antes de interpolar en el HTML del email.
+function escapeHtml(valor: string): string {
+  return valor
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+export function emailComercioContactoAdmin(
+  comercio: { nombre: string },
+  usuario: { nombre: string; email: string },
+  asunto: string,
+  mensaje: string,
+) {
+  const mensajeHtml = escapeHtml(mensaje).replace(/\n/g, "<br />");
+  return {
+    subject: `[Mi comercio] ${escapeHtml(asunto)} — ${comercio.nombre}`,
+    html: layout(
+      "Mensaje de un comercio",
+      `
+        <p>
+          <strong>${escapeHtml(comercio.nombre)}</strong> (${escapeHtml(usuario.nombre)},
+          ${escapeHtml(usuario.email)}) escribió:
+        </p>
+        <p style="white-space: pre-line; border-left: 3px solid #eee; padding-left: 12px;">
+          ${mensajeHtml}
+        </p>
+        <p style="font-size: 12px; color: #888;">Podés responder directo a este correo.</p>
+      `,
+    ),
+  };
+}
+
 interface FavoritoNotificable {
   titulo: string;
   slug: string;

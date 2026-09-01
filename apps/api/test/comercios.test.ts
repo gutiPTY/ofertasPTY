@@ -241,4 +241,50 @@ describe("/comercios", () => {
       await adminDueno.cleanup();
     }
   }, 30000);
+
+  it("POST /comercios/contactar-admin rechaza sin token", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "POST",
+      url: "/comercios/contactar-admin",
+      payload: { asunto: "Consulta", mensaje: "Quiero empezar el plan pago" },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("POST /comercios/contactar-admin rechaza si el usuario no tiene comercio", async () => {
+    const sinComercio = await createTestUser();
+    try {
+      const app = buildApp();
+      await app.inject({
+        method: "POST",
+        url: "/auth/sync",
+        headers: { authorization: `Bearer ${sinComercio.accessToken}` },
+        payload: { email: sinComercio.email, nombre: "Sin Comercio Test" },
+      });
+
+      const res = await app.inject({
+        method: "POST",
+        url: "/comercios/contactar-admin",
+        headers: { authorization: `Bearer ${sinComercio.accessToken}` },
+        payload: { asunto: "Consulta", mensaje: "Quiero empezar el plan pago" },
+      });
+      expect(res.statusCode).toBe(404);
+      expect(res.json().error).toBe("sin_comercio");
+    } finally {
+      await sinComercio.cleanup();
+    }
+  }, 20000);
+
+  it("POST /comercios/contactar-admin envía el mensaje al admin", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "POST",
+      url: "/comercios/contactar-admin",
+      headers: { authorization: `Bearer ${solicitante.accessToken}` },
+      payload: { asunto: "Quiero el plan pago", mensaje: "Hola, ¿cómo arranco la afiliación?" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().ok).toBe(true);
+  }, 15000);
 });

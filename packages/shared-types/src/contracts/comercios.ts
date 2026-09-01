@@ -18,3 +18,9 @@ export const RechazarComercioInputSchema = z.object({
   motivo: z.string().min(3).max(500),
 });
 export type RechazarComercioInput = z.infer<typeof RechazarComercioInputSchema>;
+
+export const ContactarAdminInputSchema = z.object({
+  asunto: z.string().min(3).max(150),
+  mensaje: z.string().min(10).max(3000),
+});
+export type ContactarAdminInput = z.infer<typeof ContactarAdminInputSchema>;
