@@ -96,7 +96,7 @@ export default async function PerfilPage() {
             <legend className="mb-1 text-xs font-bold uppercase tracking-wide text-muted">
               Categorías favoritas
             </legend>
-            <div className="flex flex-wrap gap-x-3 gap-y-2.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-3">
               {categorias.map((categoria) => (
                 <label key={categoria.id}>
                   <input
@@ -116,7 +116,7 @@ export default async function PerfilPage() {
             <legend className="mb-1 text-xs font-bold uppercase tracking-wide text-muted">
               Provincias favoritas
             </legend>
-            <div className="flex flex-wrap gap-x-3 gap-y-2.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-3">
               {PROVINCIAS_PANAMA.map((provincia) => (
                 <label key={provincia}>
                   <input
