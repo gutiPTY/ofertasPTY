@@ -24,3 +24,8 @@ export const ContactarAdminInputSchema = z.object({
   mensaje: z.string().min(10).max(3000),
 });
 export type ContactarAdminInput = z.infer<typeof ContactarAdminInputSchema>;
+
+export const ActualizarLogoComercioInputSchema = z.object({
+  logoUrl: z.string().url(),
+});
+export type ActualizarLogoComercioInput = z.infer<typeof ActualizarLogoComercioInputSchema>;

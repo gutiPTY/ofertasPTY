@@ -95,6 +95,10 @@ model Comercio {
   // Ruta dentro del bucket privado "comercio-docs" (NO es una URL pública,
   // a diferencia de Oferta.imagenUrl). Se sirve solo vía URL firmada.
   avisoOperacionesPath String
+  // URL pública (bucket "ofertas", mismo bucket que las imágenes de
+  // oferta, carpeta del propio usuario) — opcional, el comercio la sube
+  // desde /comercio/solicitud cuando quiere.
+  logoUrl              String?
   estado               EstadoComercio @default(PENDIENTE)
   motivoRechazo        String?
   planPago             Boolean        @default(false)
