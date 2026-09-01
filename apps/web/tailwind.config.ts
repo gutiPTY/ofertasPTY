@@ -21,6 +21,7 @@ const config: Config = {
         "ember-ink": "var(--ember-ink)",
         flare: "var(--flare)",
         spark: "var(--spark)",
+        "spark-bg": "var(--spark-bg)",
         success: "var(--success)",
         "success-bg": "var(--success-bg)",
         warning: "var(--warning)",
