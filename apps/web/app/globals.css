@@ -17,6 +17,7 @@
   --ember-ink: #ffffff;
   --flare: #f2762e;
   --spark: #ffc53d;
+  --spark-bg: #fdf1d6;
 
   --success: #3f7d53;
   --success-bg: #e6f0e8;
@@ -35,6 +36,7 @@
     --line: #423628;
     --muted: #b3a696;
     --ember-ink: #fff8f1;
+    --spark-bg: #332a0f;
     --success-bg: #1d2c20;
     --warning-bg: #2e2210;
     --critical-bg: #2f1c1d;
