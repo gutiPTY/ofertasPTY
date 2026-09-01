@@ -1,5 +1,9 @@
 import type { FastifyInstance } from "fastify";
-import { ContactarAdminInputSchema, CrearSolicitudComercioInputSchema } from "@ofertaspty/shared-types";
+import {
+  ActualizarLogoComercioInputSchema,
+  ContactarAdminInputSchema,
+  CrearSolicitudComercioInputSchema,
+} from "@ofertaspty/shared-types";
 import { prisma } from "@ofertaspty/database";
 import { sendEmail } from "../lib/email.js";
 import { emailComercioContactoAdmin } from "../lib/email-templates.js";
@@ -13,6 +17,7 @@ const comercioSelect = {
   ruc: true,
   direccionFiscal: true,
   representanteLegal: true,
+  logoUrl: true,
   estado: true,
   motivoRechazo: true,
   planPago: true,
@@ -142,6 +147,38 @@ export default async function comerciosRoutes(fastify: FastifyInstance) {
       }
 
       return reply.send({ ok: true });
+    },
+  );
+
+  // Logo del comercio — se puede subir/cambiar en cualquier momento
+  // (a diferencia de /comercios/solicitud, que solo acepta reenvíos
+  // mientras el comercio esté RECHAZADO). La imagen ya se subió al bucket
+  // público "ofertas" del lado del cliente; acá solo se guarda la URL.
+  fastify.patch(
+    "/comercios/mi-logo",
+    { preHandler: fastify.authenticate },
+    async (request, reply) => {
+      const usuario = await prisma.usuario.findUnique({
+        where: { supabaseAuthId: request.user!.id },
+      });
+      if (!usuario) {
+        return reply.code(404).send({ error: "usuario_no_sincronizado" });
+      }
+
+      const existente = await prisma.comercio.findUnique({ where: { usuarioId: usuario.id } });
+      if (!existente) {
+        return reply.code(404).send({ error: "sin_comercio" });
+      }
+
+      const body = ActualizarLogoComercioInputSchema.parse(request.body);
+
+      const comercio = await prisma.comercio.update({
+        where: { id: existente.id },
+        data: { logoUrl: body.logoUrl },
+        select: comercioSelect,
+      });
+
+      return reply.send({ comercio });
     },
   );
 }

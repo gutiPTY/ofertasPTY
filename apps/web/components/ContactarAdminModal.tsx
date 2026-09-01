@@ -126,7 +126,7 @@ export default function ContactarAdminModal({
             <textarea
               value={mensaje}
               onChange={(event) => setMensaje(event.target.value)}
-              placeholder="Escribí tu mensaje acá — por ejemplo, contanos que querés arrancar la afiliación al plan pago y cuándo te viene bien que te contactemos."
+              placeholder="Escribe tu mensaje aquí — por ejemplo, cuéntanos que quieres arrancar la afiliación al plan pago y cuándo te viene bien que te contactemos."
               rows={7}
               className="resize-none bg-transparent px-5 py-4 text-sm text-ink outline-none placeholder:text-muted"
             />

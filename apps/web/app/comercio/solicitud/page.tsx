@@ -22,6 +22,7 @@ interface ComercioMine {
     estado: "PENDIENTE" | "VERIFICADO" | "RECHAZADO";
     motivoRechazo: string | null;
     planPago: boolean;
+    logoUrl: string | null;
     ruc: string;
     direccion: string;
     direccionFiscal: string;
@@ -34,6 +35,8 @@ interface ComercioMine {
 
 const ALLOWED_DOC_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const MAX_DOC_BYTES = 5 * 1024 * 1024;
+const ALLOWED_LOGO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 
 const INPUT_CLASS =
   "rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-ember focus:outline-none";
@@ -191,6 +194,8 @@ export default function SolicitudComercioPage() {
   const [pendingForm, setPendingForm] = useState<HTMLFormElement | null>(null);
   const [detalle, setDetalle] = useState<OfertaDetalleData | null>(null);
   const [contactando, setContactando] = useState(false);
+  const [logoSubiendo, setLogoSubiendo] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -239,6 +244,54 @@ export default function SolicitudComercioPage() {
       vencidas: ofertas.filter((o) => o.estado === "EXPIRADA").length,
     };
   }, [mine]);
+
+  async function handleLogoChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !session) return;
+
+    setLogoError(null);
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+      setLogoError("El logo debe ser JPEG, PNG o WebP.");
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      setLogoError("El logo no puede superar los 5MB.");
+      return;
+    }
+
+    setLogoSubiendo(true);
+    try {
+      // Mismo bucket público que usan las imágenes de oferta ("ofertas") y
+      // la misma convención de carpeta por usuario que exige la política
+      // RLS de Storage — solo cambia el prefijo del archivo.
+      const path = `${session.user.id}/logo-${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("ofertas")
+        .upload(path, file, { contentType: file.type });
+      if (uploadError) throw uploadError;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("ofertas").getPublicUrl(path);
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/comercios/mi-logo`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ logoUrl: publicUrl }),
+      });
+      if (!res.ok) throw new Error("No se pudo guardar el logo.");
+
+      setMine((prev) => (prev ? { ...prev, comercio: { ...prev.comercio, logoUrl: publicUrl } } : prev));
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : "No se pudo subir el logo.");
+    } finally {
+      setLogoSubiendo(false);
+    }
+  }
 
   function handleDocChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -337,17 +390,56 @@ export default function SolicitudComercioPage() {
       <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-6 px-4 py-8 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold"
+            <label
+              className="group relative flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl"
               style={{ backgroundColor: bg, color: fg }}
+              title={comercio.logoUrl ? "Cambiar logo" : "Subir logo"}
             >
-              {comercio.nombre.charAt(0).toUpperCase()}
-            </span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleLogoChange}
+                disabled={logoSubiendo}
+                className="sr-only"
+              />
+              {comercio.logoUrl && (
+                <Image
+                  src={comercio.logoUrl}
+                  alt={`Logo de ${comercio.nombre}`}
+                  fill
+                  sizes="56px"
+                  className="object-cover"
+                />
+              )}
+              {!comercio.logoUrl && !logoSubiendo && (
+                <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6">
+                  <path
+                    d="M12 16V6M12 6l-4 4M12 6l4 4"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+              {logoSubiendo && <span className="text-xs font-semibold">…</span>}
+              <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-[10px] font-bold uppercase tracking-wide text-white opacity-0 transition group-hover:opacity-100">
+                {comercio.logoUrl ? "Cambiar" : "Subir logo"}
+              </span>
+            </label>
             <div>
               <h1 className="font-display text-2xl font-semibold text-ink">{comercio.nombre}</h1>
               <p className="text-sm text-muted">
                 {comercio.categoria.nombre} · Miembro desde {miembroDesde}
               </p>
+              {logoError && <p className="text-xs text-critical">{logoError}</p>}
             </div>
           </div>
           <span
