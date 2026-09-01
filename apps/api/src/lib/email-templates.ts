@@ -52,6 +52,7 @@ const ETIQUETAS_CAMPO: Record<string, string> = {
   fechaInicio: "Vigencia desde",
   fechaVencimiento: "Vigencia hasta",
   categoriaId: "Categoría",
+  diaSemana: "Día específico",
 };
 
 export function emailOfertaEditada(oferta: { titulo: string }, cambios: Record<string, { anterior: unknown; nuevo: unknown }>) {
@@ -108,6 +109,43 @@ export function emailDigestPreferencias(ofertas: OfertaDigest[]) {
         <ul style="padding-left: 20px;">${filas}</ul>
         <p style="font-size: 12px; color: #888;">
           Podés cambiar tus categorías/provincias favoritas desde tu perfil en cualquier momento.
+        </p>
+      `,
+    ),
+  };
+}
+
+interface FavoritoNotificable {
+  titulo: string;
+  slug: string;
+  motivo: string;
+}
+
+// Épica 9 — job diario de notificaciones por favorito (ver
+// jobs/notificaciones-favoritos.ts). Un solo email agrupado por usuario,
+// aunque tenga varios favoritos con aviso hoy, para no mandar uno por
+// oferta (decisión de negocio confirmada con el usuario).
+export function emailNotificacionesFavoritos(items: FavoritoNotificable[]) {
+  const filas = items
+    .map(
+      (item) => `
+        <li style="margin-bottom: 12px;">
+          <a href="${env.WEB_URL}/ofertas/${item.slug}"><strong>${item.titulo}</strong></a>
+          <br />
+          <span style="font-size: 13px; color: #444;">${item.motivo}</span>
+        </li>
+      `,
+    )
+    .join("");
+
+  return {
+    subject: `${items.length} de tus favoritos ${items.length === 1 ? "tiene" : "tienen"} novedades hoy`,
+    html: layout(
+      "Novedades de tus ofertas favoritas",
+      `
+        <ul style="padding-left: 20px;">${filas}</ul>
+        <p style="font-size: 12px; color: #888;">
+          Podés cambiar cuándo y cómo te avisamos de cada favorito desde /favoritos.
         </p>
       `,
     ),

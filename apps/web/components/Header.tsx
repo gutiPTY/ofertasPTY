@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import Logo from "@/components/Logo";
 import LogoutButton from "@/components/LogoutButton";
 import SearchBox from "@/components/SearchBox";
+import NotificacionesBell from "@/components/NotificacionesBell";
 
 interface Categoria {
   id: string;
@@ -89,6 +90,8 @@ export default async function Header() {
         </nav>
 
         <SearchBox />
+
+        {user && <NotificacionesBell />}
 
         <Link
           href="/publicar"

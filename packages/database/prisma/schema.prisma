@@ -28,6 +28,20 @@ enum EstadoComercio {
   RECHAZADO
 }
 
+// Épica 9 (notificaciones por favorito) — solo tiene sentido para promos
+// recurrentes de un día fijo a la semana (ej. "Miércoles de Descuento").
+// Independiente de fechaInicio/fechaVencimiento, que siguen modelando el
+// rango de vigencia general de la oferta.
+enum DiaSemana {
+  LUNES
+  MARTES
+  MIERCOLES
+  JUEVES
+  VIERNES
+  SABADO
+  DOMINGO
+}
+
 model Usuario {
   id             String   @id @default(uuid())
   email          String   @unique
@@ -38,13 +52,14 @@ model Usuario {
   reputacion     Int      @default(0) // Épica 10: +N por oferta aprobada, -N por rechazada/reportada
   creadoEn       DateTime @default(now())
 
-  ofertas      Oferta[]             @relation("OfertasCreadas")
-  reportes     Reporte[]
-  favoritos    Favorito[]
-  moderaciones Moderacion[]         @relation("Moderador")
-  preferencias PreferenciaUsuario[] // Épica 9: categorías/provincias favoritas para alertas
-  comercio     Comercio?
-  ediciones    OfertaEdicion[]      @relation("EdicionesAdmin")
+  ofertas        Oferta[]             @relation("OfertasCreadas")
+  reportes       Reporte[]
+  favoritos      Favorito[]
+  moderaciones   Moderacion[]         @relation("Moderador")
+  preferencias   PreferenciaUsuario[] // Épica 9: categorías/provincias favoritas para alertas
+  comercio       Comercio?
+  ediciones      OfertaEdicion[]      @relation("EdicionesAdmin")
+  notificaciones Notificacion[]
 }
 
 // Épica 9 — Personalización y notificaciones
@@ -118,6 +133,7 @@ model Oferta {
   // digest semanal de Épica 9 para saber qué es "nuevo" desde la última
   // corrida, sin depender de un cursor por usuario.
   publicadaEn      DateTime?
+  diaSemana        DiaSemana? // solo para promos recurrentes de un día fijo (ver Épica 9)
 
   categoria   Categoria @relation(fields: [categoriaId], references: [id])
   categoriaId String
@@ -185,5 +201,30 @@ model Favorito {
   ofertaId  String
   creadoEn  DateTime @default(now())
 
+  // Épica 9 — vía y momento de notificación por favorito, todos opt-in
+  // (default false); el usuario los activa desde /favoritos. El job diario
+  // (jobs/notificaciones-favoritos.ts) los evalúa una vez por día.
+  notifEmail      Boolean @default(false)
+  notifInterna    Boolean @default(false)
+  notifDiaria     Boolean @default(false)
+  notifElDia      Boolean @default(false) // sin efecto si oferta.diaSemana es null
+  notifUltimoDia  Boolean @default(false)
+  notifUnDiaAntes Boolean @default(false)
+
   @@unique([usuarioId, ofertaId])
+}
+
+// Centro de notificaciones interno (campana en el header). Independiente
+// del email — un mismo evento del job puede generar ambos, uno, o ninguno,
+// según lo que haya activado el usuario en Favorito.notif*.
+model Notificacion {
+  id         String   @id @default(uuid())
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId  String
+  mensaje    String
+  ofertaSlug String?
+  leida      Boolean  @default(false)
+  creadoEn   DateTime @default(now())
+
+  @@index([usuarioId, leida])
 }

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
+import { DIA_SEMANA_LABEL, type DiaSemana } from "@ofertaspty/shared-types";
 
 export interface OfertaDetalleData {
   id: string;
@@ -19,6 +20,7 @@ export interface OfertaDetalleData {
   linkExterno: string | null;
   fechaInicio: string;
   fechaVencimiento: string;
+  diaSemana?: DiaSemana | null;
   estado: "PENDIENTE" | "PUBLICADA" | "RECHAZADA" | "EXPIRADA" | "EN_REVISION";
   categoria: { nombre: string };
   moderaciones: { motivo: string | null }[];
@@ -113,6 +115,9 @@ export default function OfertaDetalleModal({
               Vigente del {new Date(oferta.fechaInicio).toLocaleDateString("es-PA")} al{" "}
               {new Date(oferta.fechaVencimiento).toLocaleDateString("es-PA")}
             </p>
+            {oferta.diaSemana && (
+              <p className="font-semibold text-ink">Todos los {DIA_SEMANA_LABEL[oferta.diaSemana]}</p>
+            )}
             {oferta.linkExterno && (
               <a
                 href={oferta.linkExterno}

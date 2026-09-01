@@ -56,6 +56,7 @@ export default async function ofertasRoutes(fastify: FastifyInstance) {
           linkExterno: body.linkExterno,
           fechaInicio: body.fechaInicio,
           fechaVencimiento: body.fechaVencimiento,
+          diaSemana: body.diaSemana,
           categoriaId: body.categoriaId,
           creadoPorId: usuario.id,
           comercioId,
