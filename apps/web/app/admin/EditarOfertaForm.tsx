@@ -94,7 +94,7 @@ export default function EditarOfertaForm({
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        className="rounded border px-3 py-1.5 text-sm"
+        className="rounded-full border border-line px-4 py-1.5 text-sm font-bold text-ink transition hover:border-ember hover:text-ember"
       >
         Editar
       </button>
@@ -116,19 +116,19 @@ export default function EditarOfertaForm({
         }
         setAbierto(false);
       }}
-      className="mt-2 flex w-full flex-col gap-2 rounded border bg-neutral-50 p-3"
+      className="mt-2 flex w-full flex-col gap-2 rounded-2xl border border-line bg-surface-2 p-4"
     >
-      <input name="titulo" defaultValue={oferta.titulo} className="rounded border px-2 py-1.5 text-sm" />
+      <input name="titulo" defaultValue={oferta.titulo} className="rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none" />
       <textarea
         name="descripcion"
         defaultValue={oferta.descripcion}
         rows={3}
-        className="rounded border px-2 py-1.5 text-sm"
+        className="rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
       />
       <input
         name="imagenUrl"
         defaultValue={oferta.imagenUrl}
-        className="rounded border px-2 py-1.5 text-sm"
+        className="rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
       />
       <div className="flex gap-2">
         <input
@@ -137,7 +137,7 @@ export default function EditarOfertaForm({
           step="0.01"
           defaultValue={oferta.precioOriginal ?? ""}
           placeholder="Precio original"
-          className="w-1/2 rounded border px-2 py-1.5 text-sm"
+          className="w-1/2 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
         />
         <input
           name="precioOferta"
@@ -145,13 +145,13 @@ export default function EditarOfertaForm({
           step="0.01"
           defaultValue={oferta.precioOferta ?? ""}
           placeholder="Precio oferta"
-          className="w-1/2 rounded border px-2 py-1.5 text-sm"
+          className="w-1/2 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
         />
       </div>
       <select
         name="provincia"
         defaultValue={oferta.provincia}
-        className="rounded border px-2 py-1.5 text-sm"
+        className="rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
       >
         {PROVINCIAS_PANAMA.map((p) => (
           <option key={p} value={p}>
@@ -163,38 +163,38 @@ export default function EditarOfertaForm({
         name="distrito"
         defaultValue={oferta.distrito ?? ""}
         placeholder="Distrito"
-        className="rounded border px-2 py-1.5 text-sm"
+        className="rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
       />
       <input
         name="direccion"
         defaultValue={oferta.direccion ?? ""}
         placeholder="Dirección"
-        className="rounded border px-2 py-1.5 text-sm"
+        className="rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
       />
       <input
         name="linkExterno"
         defaultValue={oferta.linkExterno ?? ""}
         placeholder="Link externo"
-        className="rounded border px-2 py-1.5 text-sm"
+        className="rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
       />
       <div className="flex gap-2">
         <input
           name="fechaInicio"
           type="date"
           defaultValue={toDateInputValue(oferta.fechaInicio)}
-          className="w-1/2 rounded border px-2 py-1.5 text-sm"
+          className="w-1/2 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
         />
         <input
           name="fechaVencimiento"
           type="date"
           defaultValue={toDateInputValue(oferta.fechaVencimiento)}
-          className="w-1/2 rounded border px-2 py-1.5 text-sm"
+          className="w-1/2 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
         />
       </div>
       <select
         name="categoriaId"
         defaultValue={oferta.categoriaId}
-        className="rounded border px-2 py-1.5 text-sm"
+        className="rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
       >
         {categorias.map((c) => (
           <option key={c.id} value={c.id}>
@@ -203,13 +203,13 @@ export default function EditarOfertaForm({
         ))}
       </select>
       <div className="flex gap-2">
-        <button type="submit" className="rounded bg-black px-3 py-1.5 text-sm text-white">
+        <button type="submit" className="rounded-full bg-ember px-4 py-1.5 text-sm font-bold text-ember-ink transition hover:brightness-95">
           Guardar cambios
         </button>
         <button
           type="button"
           onClick={() => setAbierto(false)}
-          className="rounded border px-3 py-1.5 text-sm"
+          className="rounded-full border border-line px-4 py-1.5 text-sm font-bold text-ink transition hover:border-ember hover:text-ember"
         >
           Cancelar
         </button>

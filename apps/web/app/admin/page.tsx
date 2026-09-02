@@ -1,7 +1,11 @@
+import { Suspense } from "react";
 import { REPUTACION_INSIGNIA_UMBRAL } from "@ofertaspty/shared-types";
 import { createClient } from "@/lib/supabase/server";
 import InsigniaColaboradorConfiable from "@/components/InsigniaColaboradorConfiable";
 import EditarOfertaForm from "./EditarOfertaForm";
+import DashboardStats from "./DashboardStats";
+import HistorialOfertas from "./HistorialOfertas";
+import ComerciosSection from "./ComerciosSection";
 import {
   aprobarOferta,
   rechazarOferta,
@@ -50,35 +54,63 @@ interface ComercioSolicitud {
   usuario: { nombre: string; email: string };
 }
 
-interface ComercioVerificado extends ComercioSolicitud {
+interface ComercioVerificado {
+  id: string;
+  nombre: string;
   planPago: boolean;
+  categoria: { nombre: string };
+}
+
+const HISTORIAL_ESTADOS = new Set(["PUBLICADA", "RECHAZADA", "EXPIRADA"]);
+
+function StatCardSkeleton() {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="h-16 animate-pulse rounded-2xl bg-surface" />
+      ))}
+    </div>
+  );
+}
+
+function HistorialSkeleton() {
+  return (
+    <div className="flex flex-col gap-3">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="h-20 animate-pulse rounded-2xl bg-surface" />
+      ))}
+    </div>
+  );
 }
 
 function ComercioSolicitudCard({ comercio }: { comercio: ComercioSolicitud }) {
   return (
-    <li className="flex flex-col gap-2 rounded border p-3">
-      <p className="font-medium">{comercio.nombre}</p>
-      <p className="text-sm text-neutral-600">
+    <li className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
+      <p className="font-display text-sm font-semibold text-ink">{comercio.nombre}</p>
+      <p className="text-sm text-muted">
         {comercio.categoria.nombre} · RUC {comercio.ruc}
       </p>
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-muted">
         Dirección: {comercio.direccion} · Fiscal: {comercio.direccionFiscal}
       </p>
-      <p className="text-xs text-neutral-500">Representante legal: {comercio.representanteLegal}</p>
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-muted">Representante legal: {comercio.representanteLegal}</p>
+      <p className="text-xs text-muted">
         Solicitado por {comercio.usuario.nombre} ({comercio.usuario.email})
       </p>
       <a
         href={`/api/admin/comercios/${comercio.id}/documento`}
         target="_blank"
         rel="noopener noreferrer"
-        className="w-fit text-sm text-blue-700 underline"
+        className="w-fit text-sm font-semibold text-ember underline"
       >
         Ver Aviso de Operaciones
       </a>
       <div className="mt-1 flex flex-wrap items-center gap-2">
         <form action={verificarComercio.bind(null, comercio.id)}>
-          <button type="submit" className="rounded bg-black px-3 py-1.5 text-sm text-white">
+          <button
+            type="submit"
+            className="rounded-full bg-ember px-4 py-1.5 text-sm font-bold text-ember-ink transition hover:brightness-95"
+          >
             Verificar
           </button>
         </form>
@@ -87,34 +119,16 @@ function ComercioSolicitudCard({ comercio }: { comercio: ComercioSolicitud }) {
             name="motivo"
             placeholder="Motivo del rechazo"
             required
-            className="rounded border px-2 py-1.5 text-sm"
+            className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm text-ink placeholder:text-muted focus:border-ember focus:outline-none"
           />
-          <button type="submit" className="rounded border px-3 py-1.5 text-sm">
+          <button
+            type="submit"
+            className="rounded-full border border-line px-4 py-1.5 text-sm font-bold text-ink transition hover:border-critical hover:text-critical"
+          >
             Rechazar
           </button>
         </form>
       </div>
-    </li>
-  );
-}
-
-function ComercioVerificadoCard({ comercio }: { comercio: ComercioVerificado }) {
-  return (
-    <li className="flex items-center justify-between gap-3 rounded border p-3">
-      <div>
-        <p className="font-medium">{comercio.nombre}</p>
-        <p className="text-sm text-neutral-600">{comercio.categoria.nombre}</p>
-      </div>
-      <form action={togglePlanPago.bind(null, comercio.id)}>
-        <button
-          type="submit"
-          className={`rounded px-3 py-1.5 text-sm ${
-            comercio.planPago ? "bg-black text-white" : "border"
-          }`}
-        >
-          Plan pago: {comercio.planPago ? "Activo" : "Inactivo"}
-        </button>
-      </form>
     </li>
   );
 }
@@ -129,24 +143,22 @@ function OfertaCard({
   categorias: Categoria[];
 }) {
   return (
-    <li className="flex gap-4 rounded border p-3">
+    <li className="flex gap-4 rounded-2xl border border-line bg-surface p-4">
       {/* eslint-disable-next-line @next/next/no-img-element -- URL externa (Supabase Storage), panel interno de bajo tráfico */}
-      <img src={oferta.imagenUrl} alt={oferta.titulo} className="h-24 w-24 rounded object-cover" />
+      <img src={oferta.imagenUrl} alt={oferta.titulo} className="h-24 w-24 rounded-xl object-cover" />
       <div className="flex flex-1 flex-col gap-1">
-        <p className="font-medium">{oferta.titulo}</p>
-        <p className="text-sm text-neutral-600">{oferta.descripcion}</p>
-        <p className="text-xs text-neutral-500">
+        <p className="font-display text-sm font-semibold text-ink">{oferta.titulo}</p>
+        <p className="text-sm text-muted">{oferta.descripcion}</p>
+        <p className="text-xs text-muted">
           {oferta.categoria.nombre} · {oferta.provincia} · vence{" "}
           {new Date(oferta.fechaVencimiento).toLocaleDateString("es-PA")}
         </p>
-        <p className="flex items-center gap-1.5 text-xs text-neutral-500">
+        <p className="flex items-center gap-1.5 text-xs text-muted">
           Publicado por {oferta.creadoPor.nombre} ({oferta.creadoPor.email})
-          {oferta.creadoPor.reputacion >= REPUTACION_INSIGNIA_UMBRAL && (
-            <InsigniaColaboradorConfiable />
-          )}
+          {oferta.creadoPor.reputacion >= REPUTACION_INSIGNIA_UMBRAL && <InsigniaColaboradorConfiable />}
         </p>
         {reportes && reportes.length > 0 && (
-          <p className="text-xs text-red-600">
+          <p className="text-xs text-critical">
             {reportes.length} reporte{reportes.length === 1 ? "" : "s"}:{" "}
             {reportes.map((r) => r.motivo).join(" · ")}
           </p>
@@ -154,7 +166,10 @@ function OfertaCard({
 
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <form action={aprobarOferta.bind(null, oferta.id)}>
-            <button type="submit" className="rounded bg-black px-3 py-1.5 text-sm text-white">
+            <button
+              type="submit"
+              className="rounded-full bg-ember px-4 py-1.5 text-sm font-bold text-ember-ink transition hover:brightness-95"
+            >
               Aprobar
             </button>
           </form>
@@ -162,14 +177,20 @@ function OfertaCard({
             <input
               name="motivo"
               placeholder="Motivo (opcional)"
-              className="rounded border px-2 py-1.5 text-sm"
+              className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm text-ink placeholder:text-muted focus:border-ember focus:outline-none"
             />
-            <button type="submit" className="rounded border px-3 py-1.5 text-sm">
+            <button
+              type="submit"
+              className="rounded-full border border-line px-4 py-1.5 text-sm font-bold text-ink transition hover:border-critical hover:text-critical"
+            >
               Rechazar
             </button>
           </form>
           <form action={suspenderUsuario.bind(null, oferta.creadoPor.id)}>
-            <button type="submit" className="rounded border px-3 py-1.5 text-sm text-red-600">
+            <button
+              type="submit"
+              className="rounded-full border border-line px-4 py-1.5 text-sm font-bold text-critical transition hover:bg-critical-bg"
+            >
               {oferta.creadoPor.suspendido ? "Reactivar autor" : "Suspender autor"}
             </button>
           </form>
@@ -184,7 +205,11 @@ function OfertaCard({
   );
 }
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: { historialEstado?: string; historialPage?: string };
+}) {
   const supabase = createClient();
   const {
     data: { session },
@@ -222,11 +247,22 @@ export default async function AdminPage() {
     comercios: ComercioVerificado[];
   };
 
+  const historialEstado = (
+    HISTORIAL_ESTADOS.has(searchParams.historialEstado ?? "") ? searchParams.historialEstado : "PUBLICADA"
+  ) as "PUBLICADA" | "RECHAZADA" | "EXPIRADA";
+  const historialPage = Number(searchParams.historialPage ?? "1") || 1;
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 p-6">
+    <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-10 px-4 py-8 sm:px-6">
+      <h1 className="font-display text-2xl font-semibold text-ink">Panel de administración</h1>
+
+      <Suspense fallback={<StatCardSkeleton />}>
+        <DashboardStats />
+      </Suspense>
+
       <section className="flex flex-col gap-4">
-        <h1 className="text-xl font-semibold">Cola de moderación ({ofertas.length})</h1>
-        {ofertas.length === 0 && <p className="text-neutral-600">No hay ofertas pendientes.</p>}
+        <h2 className="font-display text-xl font-semibold text-ink">Cola de moderación ({ofertas.length})</h2>
+        {ofertas.length === 0 && <p className="text-sm text-muted">No hay ofertas pendientes.</p>}
         <ul className="flex flex-col gap-4">
           {ofertas.map((oferta) => (
             <OfertaCard key={oferta.id} oferta={oferta} categorias={categorias} />
@@ -235,30 +271,30 @@ export default async function AdminPage() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h1 className="text-xl font-semibold">
+        <h2 className="font-display text-xl font-semibold text-ink">
           Ofertas reportadas en revisión ({ofertasEnRevision.length})
-        </h1>
-        {ofertasEnRevision.length === 0 && (
-          <p className="text-neutral-600">No hay ofertas en revisión.</p>
-        )}
+        </h2>
+        {ofertasEnRevision.length === 0 && <p className="text-sm text-muted">No hay ofertas en revisión.</p>}
         <ul className="flex flex-col gap-4">
           {ofertasEnRevision.map((oferta) => (
-            <OfertaCard
-              key={oferta.id}
-              oferta={oferta}
-              reportes={oferta.reportes}
-              categorias={categorias}
-            />
+            <OfertaCard key={oferta.id} oferta={oferta} reportes={oferta.reportes} categorias={categorias} />
           ))}
         </ul>
       </section>
 
       <section className="flex flex-col gap-4">
-        <h1 className="text-xl font-semibold">
+        <h2 className="font-display text-xl font-semibold text-ink">Historial de moderación</h2>
+        <Suspense fallback={<HistorialSkeleton />}>
+          <HistorialOfertas estado={historialEstado} page={historialPage} />
+        </Suspense>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="font-display text-xl font-semibold text-ink">
           Solicitudes de comercio pendientes ({comerciosPendientes.length})
-        </h1>
+        </h2>
         {comerciosPendientes.length === 0 && (
-          <p className="text-neutral-600">No hay solicitudes pendientes.</p>
+          <p className="text-sm text-muted">No hay solicitudes pendientes.</p>
         )}
         <ul className="flex flex-col gap-4">
           {comerciosPendientes.map((comercio) => (
@@ -268,15 +304,10 @@ export default async function AdminPage() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h1 className="text-xl font-semibold">Comercios verificados ({comerciosVerificados.length})</h1>
-        {comerciosVerificados.length === 0 && (
-          <p className="text-neutral-600">No hay comercios verificados todavía.</p>
-        )}
-        <ul className="flex flex-col gap-3">
-          {comerciosVerificados.map((comercio) => (
-            <ComercioVerificadoCard key={comercio.id} comercio={comercio} />
-          ))}
-        </ul>
+        <h2 className="font-display text-xl font-semibold text-ink">
+          Comercios verificados ({comerciosVerificados.length})
+        </h2>
+        <ComerciosSection comercios={comerciosVerificados} togglePlanPago={togglePlanPago} />
       </section>
     </main>
   );

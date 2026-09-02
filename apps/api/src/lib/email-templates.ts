@@ -152,6 +152,19 @@ export function emailComercioContactoAdmin(
   };
 }
 
+// Épica 5 (panel admin) — el admin le manda una promo a uno o varios
+// comercios verificados desde /admin. Igual que emailComercioContactoAdmin,
+// el mensaje es texto libre así que hay que escaparlo; a diferencia de ese,
+// el asunto SÍ es el asunto real del email (no un prefijo armado acá), así
+// que no se escapa — es un header de texto plano, no HTML.
+export function emailPromocionComercio(asunto: string, mensaje: string) {
+  const mensajeHtml = escapeHtml(mensaje).replace(/\n/g, "<br />");
+  return {
+    subject: asunto,
+    html: layout(asunto, `<p style="white-space: pre-line;">${mensajeHtml}</p>`),
+  };
+}
+
 interface FavoritoNotificable {
   titulo: string;
   slug: string;
