@@ -29,3 +29,10 @@ export const ActualizarLogoComercioInputSchema = z.object({
   logoUrl: z.string().url(),
 });
 export type ActualizarLogoComercioInput = z.infer<typeof ActualizarLogoComercioInputSchema>;
+
+export const EnviarPromocionComerciosInputSchema = z.object({
+  comercioIds: z.array(z.string().uuid()).min(1).max(200),
+  asunto: z.string().min(3).max(150),
+  mensaje: z.string().min(10).max(3000),
+});
+export type EnviarPromocionComerciosInput = z.infer<typeof EnviarPromocionComerciosInputSchema>;

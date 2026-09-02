@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import {
   EditarOfertaInputSchema,
+  EnviarPromocionComerciosInputSchema,
   ModerarOfertaInputSchema,
   RechazarComercioInputSchema,
   REPUTACION_PUNTOS_APROBACION,
@@ -12,9 +13,21 @@ import { prisma } from "@ofertaspty/database";
 import { supabaseAdmin } from "../lib/supabase-admin.js";
 import { COMERCIO_DOCS_BUCKET, COMERCIO_DOC_SIGNED_URL_SECONDS } from "../lib/constants.js";
 import { sendEmail } from "../lib/email.js";
-import { emailOfertaAprobada, emailOfertaEditada, emailOfertaRechazada } from "../lib/email-templates.js";
+import {
+  emailOfertaAprobada,
+  emailOfertaEditada,
+  emailOfertaRechazada,
+  emailPromocionComercio,
+} from "../lib/email-templates.js";
 
 const OFERTA_ESTADOS_EDITABLES = new Set(["PENDIENTE", "EN_REVISION"]);
+const HISTORIAL_ESTADOS = ["PUBLICADA", "RECHAZADA", "EXPIRADA"] as const;
+const HISTORIAL_PAGE_SIZE = 15;
+
+const historialQuerySchema = z.object({
+  estado: z.enum(HISTORIAL_ESTADOS).default("PUBLICADA"),
+  page: z.coerce.number().int().positive().default(1),
+});
 
 function serializar(valor: unknown): string | null {
   if (valor === null || valor === undefined) return null;
@@ -69,6 +82,86 @@ export default async function adminRoutes(fastify: FastifyInstance) {
         include: { categoria: true, creadoPor: true, reportes: true },
       });
       return reply.send({ ofertas });
+    },
+  );
+
+  // Dashboard — conteo de ofertas por estado + de usuarios por cuántas
+  // ofertas PUBLICADA tienen. El agregado de usuarios es un solo query SQL
+  // (GROUP BY + FILTER), barato aunque crezca la base; el frontend lo
+  // renderiza en su propio Suspense boundary para no bloquear las colas de
+  // moderación si algún día se vuelve más pesado.
+  fastify.get(
+    "/admin/dashboard/stats",
+    { preHandler: requireAdmin },
+    async (_request, reply) => {
+      const [porEstado, usuarioStats] = await Promise.all([
+        prisma.oferta.groupBy({ by: ["estado"], _count: { _all: true } }),
+        prisma.$queryRaw<
+          { total: bigint; sinOfertas: bigint; conUna: bigint; conCincoOMas: bigint }[]
+        >`
+          SELECT
+            COUNT(*)::bigint AS total,
+            COUNT(*) FILTER (WHERE cnt = 0)::bigint AS "sinOfertas",
+            COUNT(*) FILTER (WHERE cnt = 1)::bigint AS "conUna",
+            COUNT(*) FILTER (WHERE cnt >= 5)::bigint AS "conCincoOMas"
+          FROM (
+            SELECT u.id, COUNT(o.id) FILTER (WHERE o.estado = 'PUBLICADA') AS cnt
+            FROM "Usuario" u
+            LEFT JOIN "Oferta" o ON o."creadoPorId" = u.id
+            GROUP BY u.id
+          ) sub;
+        `,
+      ]);
+
+      const ofertasPorEstado: Record<string, number> = {
+        PENDIENTE: 0,
+        EN_REVISION: 0,
+        PUBLICADA: 0,
+        RECHAZADA: 0,
+        EXPIRADA: 0,
+      };
+      for (const fila of porEstado) ofertasPorEstado[fila.estado] = fila._count._all;
+
+      const fila = usuarioStats[0]!;
+      return reply.send({
+        ofertasPorEstado,
+        usuarios: {
+          total: Number(fila.total),
+          sinOfertas: Number(fila.sinOfertas),
+          conUna: Number(fila.conUna),
+          conCincoOMas: Number(fila.conCincoOMas),
+        },
+      });
+    },
+  );
+
+  // Historial de moderación — a diferencia de /pendientes y /en-revision
+  // (colas accionables), esto es de solo lectura: para cada oferta ya
+  // decidida muestra quién la aprobó/rechazó/editó (Moderacion/OfertaEdicion
+  // ya guardaban el admin responsable, pero no se exponía en la UI).
+  fastify.get(
+    "/admin/ofertas/historial",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const { estado, page } = historialQuerySchema.parse(request.query);
+
+      const [ofertas, total] = await Promise.all([
+        prisma.oferta.findMany({
+          where: { estado },
+          orderBy: { actualizadoEn: "desc" },
+          skip: (page - 1) * HISTORIAL_PAGE_SIZE,
+          take: HISTORIAL_PAGE_SIZE,
+          include: {
+            categoria: true,
+            creadoPor: true,
+            moderaciones: { orderBy: { fecha: "desc" }, take: 1, include: { moderador: true } },
+            ediciones: { orderBy: { fecha: "desc" }, take: 1, include: { admin: true } },
+          },
+        }),
+        prisma.oferta.count({ where: { estado } }),
+      ]);
+
+      return reply.send({ ofertas, total, page, pageSize: HISTORIAL_PAGE_SIZE });
     },
   );
 
@@ -329,6 +422,36 @@ export default async function adminRoutes(fastify: FastifyInstance) {
       });
 
       return reply.send({ comercio: actualizado });
+    },
+  );
+
+  // El admin manda una promo a uno o varios comercios verificados (ej.
+  // avisar de una campaña, invitar a activar el plan pago). Un email
+  // individual por comercio (no un solo "to" con todos juntos) para que
+  // ningún destinatario vea la lista de los demás.
+  fastify.post(
+    "/admin/comercios/enviar-promocion",
+    {
+      preHandler: requireAdmin,
+      config: { rateLimit: { max: 10, timeWindow: "10 minutes" } },
+    },
+    async (request, reply) => {
+      const body = EnviarPromocionComerciosInputSchema.parse(request.body);
+
+      const comercios = await prisma.comercio.findMany({
+        where: { id: { in: body.comercioIds } },
+        include: { usuario: true },
+      });
+      if (comercios.length === 0) {
+        return reply.code(404).send({ error: "comercios_no_encontrados" });
+      }
+
+      const { subject, html } = emailPromocionComercio(body.asunto, body.mensaje);
+      await Promise.all(
+        comercios.map((comercio) => sendEmail({ to: comercio.usuario.email, subject, html })),
+      );
+
+      return reply.send({ ok: true, enviados: comercios.length });
     },
   );
 }

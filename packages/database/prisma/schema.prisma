@@ -157,6 +157,7 @@ model Oferta {
   @@index([estado])
   @@index([provincia])
   @@index([categoriaId])
+  @@index([creadoPorId])
 }
 
 model Moderacion {

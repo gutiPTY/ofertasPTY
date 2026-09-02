@@ -206,7 +206,7 @@ describe("/admin — Épica 10 reputación de usuarios", () => {
     await admin.cleanup();
     await autorRico.cleanup();
     await autorPobre.cleanup();
-  }, 30000);
+  }, 60000);
 
   it("prioriza en la cola a los autores de menor reputación", async () => {
     const app = buildApp();
@@ -253,5 +253,172 @@ describe("/admin — Épica 10 reputación de usuarios", () => {
       where: { supabaseAuthId: autorRico.supabaseAuthId },
     });
     expect(usuario.reputacion).toBe(45);
+  }, 15000);
+});
+
+describe("/admin — dashboard, historial y promociones", () => {
+  let admin: Awaited<ReturnType<typeof createTestUser>>;
+  let autor: Awaited<ReturnType<typeof createTestUser>>;
+  let duenoComercio: Awaited<ReturnType<typeof createTestUser>>;
+  let ofertaAprobadaId: string;
+  let comercioId: string;
+
+  beforeAll(async () => {
+    admin = await createTestUser({ role: Rol.ADMIN });
+    autor = await createTestUser();
+    duenoComercio = await createTestUser();
+    const categoria = await prisma.categoria.findFirstOrThrow();
+
+    const app = buildApp();
+    for (const [usuario, nombre] of [
+      [admin, "Admin Dashboard"],
+      [autor, "Autor Dashboard"],
+      [duenoComercio, "Dueño Comercio Dashboard"],
+    ] as const) {
+      await app.inject({
+        method: "POST",
+        url: "/auth/sync",
+        headers: { authorization: `Bearer ${usuario.accessToken}` },
+        payload: { email: usuario.email, nombre },
+      });
+    }
+    await prisma.usuario.update({
+      where: { supabaseAuthId: admin.supabaseAuthId },
+      data: { rol: Rol.ADMIN },
+    });
+
+    const crearRes = await app.inject({
+      method: "POST",
+      url: "/ofertas",
+      headers: { authorization: `Bearer ${autor.accessToken}` },
+      payload: {
+        titulo: "Oferta para historial",
+        descripcion: "Descripción de prueba con más de diez caracteres",
+        imagenUrl: "https://example.com/a.jpg",
+        provincia: "Panamá",
+        fechaInicio: new Date().toISOString(),
+        fechaVencimiento: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        categoriaId: categoria.id,
+      },
+    });
+    ofertaAprobadaId = crearRes.json().oferta.id;
+    await app.inject({
+      method: "POST",
+      url: `/admin/ofertas/${ofertaAprobadaId}/aprobar`,
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+    });
+
+    const solicitudRes = await app.inject({
+      method: "POST",
+      url: "/comercios/solicitud",
+      headers: { authorization: `Bearer ${duenoComercio.accessToken}` },
+      payload: {
+        nombre: "Comercio Dashboard Test",
+        categoriaId: categoria.id,
+        direccion: "Vía España, Panamá",
+        ruc: "1-111-1111",
+        direccionFiscal: "Vía España, Panamá",
+        representanteLegal: "Juan Pérez",
+        avisoOperacionesPath: "fake/aviso-de-prueba.pdf",
+        terminosAceptados: true,
+      },
+    });
+    comercioId = solicitudRes.json().comercio.id;
+    await app.inject({
+      method: "POST",
+      url: `/admin/comercios/${comercioId}/verificar`,
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+    });
+  }, 40000);
+
+  afterAll(async () => {
+    await admin.cleanup();
+    await autor.cleanup();
+    await duenoComercio.cleanup();
+  }, 60000);
+
+  it("GET /admin/dashboard/stats rechaza a un usuario sin rol admin", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "GET",
+      url: "/admin/dashboard/stats",
+      headers: { authorization: `Bearer ${autor.accessToken}` },
+    });
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("GET /admin/dashboard/stats devuelve conteos de ofertas y usuarios", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "GET",
+      url: "/admin/dashboard/stats",
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.ofertasPorEstado.PUBLICADA).toBeGreaterThanOrEqual(1);
+    expect(body.usuarios.total).toBeGreaterThanOrEqual(1);
+  }, 15000);
+
+  it("GET /admin/ofertas/historial rechaza a un usuario sin rol admin", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "GET",
+      url: "/admin/ofertas/historial?estado=PUBLICADA",
+      headers: { authorization: `Bearer ${autor.accessToken}` },
+    });
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("GET /admin/ofertas/historial devuelve la oferta aprobada con el admin que la moderó", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "GET",
+      url: "/admin/ofertas/historial?estado=PUBLICADA",
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+    });
+    expect(res.statusCode).toBe(200);
+    const ofertas = res.json().ofertas as { id: string; moderaciones: { moderador: { nombre: string } }[] }[];
+    const oferta = ofertas.find((o) => o.id === ofertaAprobadaId);
+    expect(oferta).toBeDefined();
+    expect(oferta!.moderaciones[0]!.moderador.nombre).toBe("Admin Dashboard");
+  }, 15000);
+
+  it("POST /admin/comercios/enviar-promocion rechaza a un usuario sin rol admin", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "POST",
+      url: "/admin/comercios/enviar-promocion",
+      headers: { authorization: `Bearer ${autor.accessToken}` },
+      payload: { comercioIds: [comercioId], asunto: "Promo", mensaje: "Mensaje de prueba de promoción" },
+    });
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("POST /admin/comercios/enviar-promocion rechaza IDs que no existen", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "POST",
+      url: "/admin/comercios/enviar-promocion",
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+      payload: {
+        comercioIds: ["00000000-0000-0000-0000-000000000000"],
+        asunto: "Promo",
+        mensaje: "Mensaje de prueba de promoción",
+      },
+    });
+    expect(res.statusCode).toBe(404);
+  }, 15000);
+
+  it("POST /admin/comercios/enviar-promocion envía la promo a los comercios seleccionados", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "POST",
+      url: "/admin/comercios/enviar-promocion",
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+      payload: { comercioIds: [comercioId], asunto: "Promo", mensaje: "Mensaje de prueba de promoción" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ok: true, enviados: 1 });
   }, 15000);
 });
