@@ -78,6 +78,7 @@ export async function editarOferta(id: string, formData: FormData) {
     "fechaInicio",
     "fechaVencimiento",
     "categoriaId",
+    "diaSemana",
   ]) {
     const valor = formData.get(campo);
     if (typeof valor === "string" && valor !== "") raw[campo] = valor;

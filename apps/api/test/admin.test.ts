@@ -87,12 +87,14 @@ describe("/admin", () => {
       method: "PATCH",
       url: `/admin/ofertas/${ofertaId}`,
       headers: { authorization: `Bearer ${admin.accessToken}` },
-      payload: { precioOferta: 42.5, titulo: "Oferta para moderar (corregida)" },
+      payload: { precioOferta: 42.5, titulo: "Oferta para moderar (corregida)", diaSemana: "MIERCOLES" },
     });
     expect(res.statusCode).toBe(200);
     expect(res.json().oferta.titulo).toBe("Oferta para moderar (corregida)");
+    expect(res.json().oferta.diaSemana).toBe("MIERCOLES");
     expect(res.json().cambios.titulo).toBeDefined();
     expect(res.json().cambios.precioOferta).toBeDefined();
+    expect(res.json().cambios.diaSemana).toBeDefined();
 
     const edicion = await prisma.ofertaEdicion.findFirst({ where: { ofertaId } });
     expect(edicion?.adminId).toBeDefined();
