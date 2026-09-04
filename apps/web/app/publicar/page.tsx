@@ -14,6 +14,10 @@ interface Categoria {
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
+const INPUT_CLASS =
+  "rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-muted focus:border-ember focus:outline-none";
+const LABEL_CLASS = "flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted";
+
 export default function PublicarPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -21,8 +25,15 @@ export default function PublicarPage() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [imagenFile, setImagenFile] = useState<File | null>(null);
+  const [imagenPreview, setImagenPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (imagenPreview) URL.revokeObjectURL(imagenPreview);
+    };
+  }, [imagenPreview]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -55,6 +66,10 @@ export default function PublicarPage() {
     }
     setError(null);
     setImagenFile(file);
+    setImagenPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -134,87 +149,145 @@ export default function PublicarPage() {
   }
 
   if (session === undefined) {
-    return <main className="p-6 text-center">Cargando…</main>;
+    return <main className="p-12 text-center text-muted">Cargando…</main>;
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 p-6">
-      <h1 className="text-xl font-semibold">Publicar oferta</h1>
-      <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-        <input name="titulo" placeholder="Título" className="rounded border px-3 py-2" required />
-        <textarea
-          name="descripcion"
-          placeholder="Descripción"
-          className="rounded border px-3 py-2"
-          rows={4}
-          required
-        />
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={handleImagenChange}
-          required
-        />
-        <div className="flex gap-3">
-          <input
-            name="precioOriginal"
-            type="number"
-            step="0.01"
-            placeholder="Precio original (opcional)"
-            className="w-1/2 rounded border px-3 py-2"
-          />
-          <input
-            name="precioOferta"
-            type="number"
-            step="0.01"
-            placeholder="Precio oferta (opcional)"
-            className="w-1/2 rounded border px-3 py-2"
-          />
-        </div>
-        <select name="provincia" className="rounded border px-3 py-2" required defaultValue="">
-          <option value="" disabled>
-            Provincia
-          </option>
-          {PROVINCIAS_PANAMA.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
-        <input name="distrito" placeholder="Distrito (opcional)" className="rounded border px-3 py-2" />
-        <input name="direccion" placeholder="Dirección (opcional)" className="rounded border px-3 py-2" />
-        <input
-          name="linkExterno"
-          type="url"
-          placeholder="Link externo (opcional)"
-          className="rounded border px-3 py-2"
-        />
-        <label className="text-sm text-neutral-600">
-          Vigencia desde
-          <input name="fechaInicio" type="date" className="mt-1 w-full rounded border px-3 py-2" required />
+    <main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <div className="flex flex-col gap-1">
+        <h1 className="font-display text-2xl font-semibold text-ink">Publicar oferta</h1>
+        <p className="text-sm text-muted">
+          Completá los datos de la promoción. Antes de publicarse en el feed, un administrador la
+          revisa.
+        </p>
+      </div>
+
+      <form
+        className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-6 sm:p-7"
+        onSubmit={handleSubmit}
+      >
+        <label className={LABEL_CLASS}>
+          Título
+          <input name="titulo" placeholder="Ej. 2x1 en combos todos los miércoles" className={INPUT_CLASS} required />
         </label>
-        <label className="text-sm text-neutral-600">
-          Vigencia hasta
-          <input
-            name="fechaVencimiento"
-            type="date"
-            className="mt-1 w-full rounded border px-3 py-2"
+
+        <label className={LABEL_CLASS}>
+          Descripción
+          <textarea
+            name="descripcion"
+            placeholder="Contá de qué se trata la promoción, condiciones, etc."
+            className={`${INPUT_CLASS} resize-none`}
+            rows={4}
             required
           />
         </label>
-        <select name="categoriaId" className="rounded border px-3 py-2" required defaultValue="">
-          <option value="" disabled>
-            Categoría
-          </option>
-          {categorias.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nombre}
+
+        <label className={LABEL_CLASS}>
+          Imagen de la oferta
+          <div className="flex items-center gap-4">
+            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-line bg-surface-2">
+              {imagenPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element -- preview local (object URL), no pasa por Image de Next
+                <img src={imagenPreview} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 text-muted">
+                  <path
+                    d="M4 17V7a2 2 0 0 1 2-2h3l1.5-2h3L15 5h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="12" cy="12" r="3.2" stroke="currentColor" strokeWidth="1.6" />
+                </svg>
+              )}
+            </div>
+            <div className="flex flex-1 flex-col gap-1">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleImagenChange}
+                required
+                className="text-sm normal-case text-ink file:mr-3 file:rounded-full file:border-0 file:bg-ember file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-ember-ink hover:file:brightness-95"
+              />
+              <span className="normal-case text-muted">JPEG, PNG o WebP, hasta 5MB.</span>
+            </div>
+          </div>
+        </label>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className={LABEL_CLASS}>
+            Precio original (opcional)
+            <input name="precioOriginal" type="number" step="0.01" placeholder="0.00" className={INPUT_CLASS} />
+          </label>
+          <label className={LABEL_CLASS}>
+            Precio oferta (opcional)
+            <input name="precioOferta" type="number" step="0.01" placeholder="0.00" className={INPUT_CLASS} />
+          </label>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className={LABEL_CLASS}>
+            Provincia
+            <select name="provincia" className={INPUT_CLASS} required defaultValue="">
+              <option value="" disabled>
+                Elegí una provincia
+              </option>
+              {PROVINCIAS_PANAMA.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={LABEL_CLASS}>
+            Distrito (opcional)
+            <input name="distrito" placeholder="Distrito" className={INPUT_CLASS} />
+          </label>
+        </div>
+
+        <label className={LABEL_CLASS}>
+          Dirección (opcional)
+          <input name="direccion" placeholder="Sucursal o dirección física" className={INPUT_CLASS} />
+        </label>
+
+        <label className={LABEL_CLASS}>
+          Link externo (opcional)
+          <input
+            name="linkExterno"
+            type="url"
+            placeholder="https://..."
+            className={INPUT_CLASS}
+          />
+        </label>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className={LABEL_CLASS}>
+            Vigencia desde
+            <input name="fechaInicio" type="date" className={`${INPUT_CLASS} normal-case`} required />
+          </label>
+          <label className={LABEL_CLASS}>
+            Vigencia hasta
+            <input name="fechaVencimiento" type="date" className={`${INPUT_CLASS} normal-case`} required />
+          </label>
+        </div>
+
+        <label className={LABEL_CLASS}>
+          Categoría
+          <select name="categoriaId" className={INPUT_CLASS} required defaultValue="">
+            <option value="" disabled>
+              Elegí una categoría
             </option>
-          ))}
-        </select>
-        <label className="text-sm text-neutral-600">
-          Día específico de la semana (opcional — solo si es una promo recurrente, ej. &quot;Miércoles de Descuento&quot;)
-          <select name="diaSemana" className="mt-1 w-full rounded border px-3 py-2" defaultValue="">
+            {categorias.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nombre}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className={LABEL_CLASS}>
+          Día específico de la semana (opcional)
+          <select name="diaSemana" className={INPUT_CLASS} defaultValue="">
             <option value="">No aplica</option>
             {DIAS_SEMANA_ORDEN.map((dia) => (
               <option key={dia} value={dia}>
@@ -222,12 +295,17 @@ export default function PublicarPage() {
               </option>
             ))}
           </select>
+          <span className="normal-case text-muted">
+            Solo si es una promo recurrente, ej. &quot;Miércoles de Descuento&quot;.
+          </span>
         </label>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        {error && <p className="text-sm text-critical">{error}</p>}
+
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+          className="rounded-full bg-ember px-4 py-2.5 text-sm font-bold text-ember-ink transition hover:brightness-95 disabled:opacity-50"
         >
           {loading ? "Publicando…" : "Publicar"}
         </button>

@@ -4,6 +4,24 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+function StarIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="1.6"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinejoin="round"
+        d="M12 3.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.2-5.4 3.2 1.3-6-4.6-4.1 6.1-.6L12 3.5Z"
+      />
+    </svg>
+  );
+}
+
 export default function FavoritoButton({ ofertaId }: { ofertaId: string }) {
   const router = useRouter();
   const supabase = createClient();
@@ -47,9 +65,14 @@ export default function FavoritoButton({ ofertaId }: { ofertaId: string }) {
       type="button"
       onClick={toggle}
       disabled={loading}
-      className="rounded border px-3 py-1.5 text-sm disabled:opacity-50"
+      className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-bold transition disabled:opacity-50 ${
+        favorito
+          ? "border-ember bg-ember text-ember-ink hover:brightness-95"
+          : "border-line text-ink hover:border-ember hover:text-ember"
+      }`}
     >
-      {favorito ? "★ Guardado en favoritos" : "☆ Guardar en favoritos"}
+      <StarIcon filled={favorito} />
+      {favorito ? "Guardado" : "Guardar"}
     </button>
   );
 }
