@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -19,12 +19,12 @@ export default function NotificacionesBell() {
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[] | null>(null);
   const contenedorRef = useRef<HTMLDivElement>(null);
 
-  async function getToken() {
+  const getToken = useCallback(async () => {
     const {
       data: { session },
     } = await supabase.auth.getSession();
     return session?.access_token ?? null;
-  }
+  }, [supabase]);
 
   useEffect(() => {
     getToken().then(async (token) => {
@@ -36,7 +36,7 @@ export default function NotificacionesBell() {
       const data = await res.json();
       setNoLeidas(data.noLeidas ?? 0);
     });
-  }, []);
+  }, [getToken]);
 
   useEffect(() => {
     function onClickFuera(event: MouseEvent) {

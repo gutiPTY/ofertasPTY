@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import CategoriaIcon, { categoriaColor } from "@/components/CategoriaIcon";
 import OfertaDetalleModal, { type OfertaDetalleData } from "@/components/OfertaDetalleModal";
 import FavoritoNotificacionModal, { type NotifPrefs } from "@/components/FavoritoNotificacionModal";
@@ -39,12 +40,12 @@ export default function FavoritosListado({ favoritos: favoritosIniciales }: { fa
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line bg-surface py-16 text-center">
         <p className="text-muted">Todavía no guardaste ninguna oferta como favorita.</p>
-        <a
+        <Link
           href="/"
           className="rounded-full bg-ember px-4 py-2 text-sm font-bold text-ember-ink transition hover:brightness-95"
         >
           Explorar ofertas
-        </a>
+        </Link>
       </div>
     );
   }

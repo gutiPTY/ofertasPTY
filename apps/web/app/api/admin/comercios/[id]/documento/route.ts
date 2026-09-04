@@ -4,8 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 // Proxy fino: obtiene una URL firmada de corta duración desde la API y
 // redirige. El documento nunca pasa por un bucket público ni por una URL
 // que el navegador pueda guardar/compartir de forma persistente.
-export async function GET(request: Request, { params }: { params: { id: string } }) {
-  const supabase = createClient();
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const supabase = await createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -14,8 +14,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
+  const { id } = await params;
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/admin/comercios/${params.id}/documento`,
+    `${process.env.NEXT_PUBLIC_API_URL}/admin/comercios/${id}/documento`,
     { headers: { Authorization: `Bearer ${session.access_token}` }, cache: "no-store" },
   );
 

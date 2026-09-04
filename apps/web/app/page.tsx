@@ -32,7 +32,12 @@ interface SearchParams {
   page?: string;
 }
 
-export default async function Home({ searchParams }: { searchParams: SearchParams }) {
+export default async function Home({
+  searchParams: searchParamsPromise,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const searchParams = await searchParamsPromise;
   const params = new URLSearchParams();
   if (searchParams.categoriaId) params.set("categoriaId", searchParams.categoriaId);
   if (searchParams.provincia) params.set("provincia", searchParams.provincia);
@@ -46,7 +51,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
   // aportan y compiten con los resultados.
   const esHomeLimpia = params.size === 0;
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [feedRes, categoriasRes, destacadasRes, sessionResult] = await Promise.all([
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/ofertas?${params.toString()}`, { cache: "no-store" }),
