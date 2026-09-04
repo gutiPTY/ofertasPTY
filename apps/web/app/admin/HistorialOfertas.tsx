@@ -35,7 +35,7 @@ export default async function HistorialOfertas({
   estado: EstadoHistorial;
   page: number;
 }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();

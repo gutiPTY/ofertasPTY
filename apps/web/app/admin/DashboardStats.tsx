@@ -22,7 +22,7 @@ function StatCard({ label, valor }: { label: string; valor: number }) {
 // futuro, nunca bloquee el render de las colas de moderación (lo más
 // importante de la página).
 export default async function DashboardStats() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();

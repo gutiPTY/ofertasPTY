@@ -11,7 +11,7 @@ interface Categoria {
 }
 
 export default async function Header() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();

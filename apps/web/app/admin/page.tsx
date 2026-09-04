@@ -207,11 +207,12 @@ function OfertaCard({
 }
 
 export default async function AdminPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { historialEstado?: string; historialPage?: string };
+  searchParams: Promise<{ historialEstado?: string; historialPage?: string }>;
 }) {
-  const supabase = createClient();
+  const searchParams = await searchParamsPromise;
+  const supabase = await createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();

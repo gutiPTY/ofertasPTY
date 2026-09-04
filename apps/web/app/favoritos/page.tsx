@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import FavoritosListado, { type FavoritoConOferta } from "./FavoritosListado";
 
 export default async function FavoritosPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();

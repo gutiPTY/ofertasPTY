@@ -11,7 +11,7 @@ interface Usuario {
 }
 
 export default async function MisOfertasPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();

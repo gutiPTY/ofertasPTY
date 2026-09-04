@@ -25,7 +25,7 @@ const CHIP_CLASS =
   "cursor-pointer rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-ink transition peer-checked:border-ember peer-checked:bg-ember peer-checked:text-ember-ink";
 
 export default async function PerfilPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();

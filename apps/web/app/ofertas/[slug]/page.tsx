@@ -36,13 +36,14 @@ async function getOferta(slug: string): Promise<OfertaDetalle | null> {
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const oferta = await getOferta(params.slug);
+  const { slug } = await params;
+  const oferta = await getOferta(slug);
   if (!oferta) return {};
 
   const descripcion = oferta.descripcion.slice(0, 160);
-  const url = `/ofertas/${params.slug}`;
+  const url = `/ofertas/${slug}`;
 
   return {
     title: oferta.titulo,
@@ -64,8 +65,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function OfertaDetallePage({ params }: { params: { slug: string } }) {
-  const oferta = await getOferta(params.slug);
+export default async function OfertaDetallePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const oferta = await getOferta(slug);
   if (!oferta) notFound();
 
   const vigenciaDesde = new Date(oferta.fechaInicio).toLocaleDateString("es-PA", {
