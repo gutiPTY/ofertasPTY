@@ -149,7 +149,12 @@ export default async function ofertasRoutes(fastify: FastifyInstance) {
 
     const oferta = await prisma.oferta.findFirst({
       where: { slug, estado: "PUBLICADA" },
-      include: { categoria: true, comercio: true },
+      include: {
+        categoria: true,
+        // Endpoint público sin auth: nunca exponer ruc/direccionFiscal/
+        // representanteLegal/avisoOperacionesPath del comercio.
+        comercio: { select: { nombre: true, logoUrl: true } },
+      },
     });
 
     if (!oferta) {
