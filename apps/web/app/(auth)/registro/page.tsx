@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RegisterInputSchema } from "@ofertaspty/shared-types";
 import { createClient } from "@/lib/supabase/client";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
+
+const INPUT_CLASS =
+  "rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-muted focus:border-ember focus:outline-none";
 
 export default function RegistroPage() {
   const router = useRouter();
@@ -56,47 +60,64 @@ export default function RegistroPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 p-6">
-      <h1 className="text-xl font-semibold">Crear cuenta</h1>
-      <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Nombre"
-          className="rounded border px-3 py-2"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          required
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          className="rounded border px-3 py-2"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Contraseña"
-          className="rounded border px-3 py-2"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={8}
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
-        >
-          {loading ? "Creando cuenta..." : "Crear cuenta"}
-        </button>
-      </form>
-      <div className="flex items-center gap-2 text-xs text-neutral-500">
-        <div className="h-px flex-1 bg-neutral-200" />o<div className="h-px flex-1 bg-neutral-200" />
+    <main className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-sm flex-col justify-center gap-6 px-4 py-12 sm:px-6">
+      <div className="flex flex-col gap-1 text-center">
+        <h1 className="font-display text-2xl font-semibold text-ink">Creá tu cuenta</h1>
+        <p className="text-sm text-muted">Publicá ofertas y guardá tus favoritas en segundos.</p>
       </div>
-      <GoogleAuthButton />
+
+      <div className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-6 sm:p-7">
+        <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+          <input
+            type="text"
+            placeholder="Nombre"
+            className={INPUT_CLASS}
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            required
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            className={INPUT_CLASS}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Contraseña"
+            className={INPUT_CLASS}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={8}
+          />
+          {error && <p className="text-sm text-critical">{error}</p>}
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded-full bg-ember px-4 py-2.5 text-sm font-bold text-ember-ink transition hover:brightness-95 disabled:opacity-50"
+          >
+            {loading ? "Creando cuenta…" : "Crear cuenta"}
+          </button>
+        </form>
+
+        <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-wide text-muted">
+          <div className="h-px flex-1 bg-line" />
+          o
+          <div className="h-px flex-1 bg-line" />
+        </div>
+
+        <GoogleAuthButton />
+      </div>
+
+      <p className="text-center text-sm text-muted">
+        ¿Ya tenés cuenta?{" "}
+        <Link href="/login" className="font-semibold text-ember hover:brightness-95">
+          Ingresá acá
+        </Link>
+      </p>
     </main>
   );
 }

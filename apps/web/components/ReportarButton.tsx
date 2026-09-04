@@ -40,7 +40,7 @@ export default function ReportarButton({ ofertaId }: { ofertaId: string }) {
   }
 
   if (estado === "enviado") {
-    return <p className="text-sm text-neutral-500">Gracias, tu reporte fue registrado.</p>;
+    return <p className="text-sm text-muted">Gracias, tu reporte fue registrado.</p>;
   }
 
   if (!abierto) {
@@ -48,7 +48,7 @@ export default function ReportarButton({ ofertaId }: { ofertaId: string }) {
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        className="text-sm text-neutral-500 underline"
+        className="w-fit text-sm font-semibold text-muted underline-offset-2 transition hover:text-critical hover:underline"
       >
         Reportar oferta
       </button>
@@ -56,36 +56,36 @@ export default function ReportarButton({ ofertaId }: { ofertaId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded border p-3">
-      <label className="text-sm font-medium" htmlFor="motivo-reporte">
-        ¿Por qué reportas esta oferta?
+    <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+      <label className="text-sm font-semibold text-ink" htmlFor="motivo-reporte">
+        ¿Por qué reportás esta oferta?
       </label>
       <input
         id="motivo-reporte"
         value={motivo}
         onChange={(e) => setMotivo(e.target.value)}
         placeholder="Ej. la oferta ya venció"
-        className="rounded border px-2 py-1.5 text-sm"
+        className="rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-ember focus:outline-none"
       />
       <div className="flex gap-2">
         <button
           type="button"
           onClick={enviar}
           disabled={estado === "loading" || motivo.trim().length < 3}
-          className="rounded bg-black px-3 py-1.5 text-sm text-white disabled:opacity-50"
+          className="rounded-full border border-critical bg-critical-bg px-4 py-1.5 text-sm font-bold text-critical transition hover:brightness-95 disabled:opacity-50"
         >
           Enviar reporte
         </button>
         <button
           type="button"
           onClick={() => setAbierto(false)}
-          className="rounded border px-3 py-1.5 text-sm"
+          className="rounded-full border border-line px-4 py-1.5 text-sm font-bold text-ink transition hover:border-ember hover:text-ember"
         >
           Cancelar
         </button>
       </div>
       {estado === "error" && (
-        <p className="text-sm text-red-600">No se pudo enviar el reporte. Intenta de nuevo.</p>
+        <p className="text-sm text-critical">No se pudo enviar el reporte. Intenta de nuevo.</p>
       )}
     </div>
   );
