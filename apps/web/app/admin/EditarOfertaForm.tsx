@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PROVINCIAS_PANAMA } from "@ofertaspty/shared-types";
+import { DIAS_SEMANA_ORDEN, DIA_SEMANA_LABEL, PROVINCIAS_PANAMA, type DiaSemana } from "@ofertaspty/shared-types";
 
 interface Categoria {
   id: string;
@@ -21,6 +21,7 @@ interface OfertaEditable {
   fechaInicio: string;
   fechaVencimiento: string;
   categoriaId: string;
+  diaSemana?: DiaSemana | null;
 }
 
 function toDateInputValue(iso: string) {
@@ -58,6 +59,8 @@ function valorBase(oferta: OfertaEditable, campo: string): string {
       return oferta.provincia;
     case "categoriaId":
       return oferta.categoriaId;
+    case "diaSemana":
+      return oferta.diaSemana ?? "";
     default:
       return "";
   }
@@ -76,6 +79,7 @@ const CAMPOS_EDITABLES = [
   "fechaInicio",
   "fechaVencimiento",
   "categoriaId",
+  "diaSemana",
 ];
 
 export default function EditarOfertaForm({
@@ -199,6 +203,18 @@ export default function EditarOfertaForm({
         {categorias.map((c) => (
           <option key={c.id} value={c.id}>
             {c.nombre}
+          </option>
+        ))}
+      </select>
+      <select
+        name="diaSemana"
+        defaultValue={oferta.diaSemana ?? ""}
+        className="rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+      >
+        <option value="">Sin día fijo</option>
+        {DIAS_SEMANA_ORDEN.map((dia) => (
+          <option key={dia} value={dia}>
+            {DIA_SEMANA_LABEL[dia]}
           </option>
         ))}
       </select>

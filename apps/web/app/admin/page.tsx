@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { REPUTACION_INSIGNIA_UMBRAL } from "@ofertaspty/shared-types";
+import { REPUTACION_INSIGNIA_UMBRAL, type DiaSemana } from "@ofertaspty/shared-types";
 import { createClient } from "@/lib/supabase/server";
 import InsigniaColaboradorConfiable from "@/components/InsigniaColaboradorConfiable";
 import EditarOfertaForm from "./EditarOfertaForm";
@@ -35,6 +35,7 @@ interface OfertaPendiente {
   fechaInicio: string;
   fechaVencimiento: string;
   categoriaId: string;
+  diaSemana: DiaSemana | null;
   categoria: { nombre: string };
   creadoPor: { id: string; nombre: string; email: string; suspendido: boolean; reputacion: number };
 }
