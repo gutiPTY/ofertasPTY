@@ -93,9 +93,10 @@ export default async function Home({
         <>
           <HeroCarousel slides={slidesCarrusel} />
           {!haySesion && <RegisterStrip />}
-          <CategoriasSection categorias={categorias} />
         </>
       )}
+
+      <CategoriasSection categorias={categorias} categoriaActivaId={searchParams.categoriaId} />
 
       <div className="mx-auto mt-10 grid w-full max-w-6xl grid-cols-1 gap-8 px-4 sm:px-6 md:grid-cols-[220px_1fr]">
         <SidebarFiltros categorias={categorias} />
