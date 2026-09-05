@@ -77,12 +77,8 @@ describe("/ofertas", () => {
       headers: { authorization: `Bearer ${user.accessToken}` },
       payload: ofertaPayload(categoriaId, { porcentajeDescuento: 100 }),
     });
-    // NOTA: debería ser 400 (error de validación del cliente), pero la API
-    // no tiene un errorHandler global que traduzca ZodError -> 400, así que
-    // hoy cualquier .parse() fallido devuelve 500 en TODOS los endpoints
-    // (gap preexistente, no introducido por este cambio). Este test documenta
-    // el comportamiento real; si se agrega ese errorHandler, actualizar a 400.
-    expect(res.statusCode).toBe(500);
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toBe("validacion");
   }, 15000);
 
   it("GET /ofertas/mine devuelve las ofertas del usuario autenticado", async () => {

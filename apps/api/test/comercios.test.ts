@@ -348,6 +348,7 @@ describe("/comercios", () => {
       headers: { authorization: `Bearer ${solicitante.accessToken}` },
       payload: { logoUrl: "no-es-una-url" },
     });
-    expect(res.statusCode).toBe(500);
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toBe("validacion");
   }, 15000);
 });
