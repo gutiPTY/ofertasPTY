@@ -1,4 +1,5 @@
 export const PROVINCIAS_PANAMA = [
+  "Todo el país",
   "Bocas del Toro",
   "Coclé",
   "Colón",
