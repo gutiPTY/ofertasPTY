@@ -38,7 +38,7 @@ export default async function Header() {
   return (
     <div className="border-b border-line bg-paper">
       <div className="border-b border-line bg-surface-2">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-end gap-4 px-4 py-1.5 text-xs text-muted sm:px-6">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-end gap-4 px-4 py-1.5 text-xs text-muted sm:px-6">
           {user ? (
             <>
               <Link href="/mis-ofertas" className="hover:text-ink">
@@ -74,7 +74,7 @@ export default async function Header() {
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-6 px-4 py-4 sm:px-6">
+      <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-6 px-4 py-4 sm:px-6">
         <Logo />
 
         <nav className="hidden flex-1 items-center gap-6 text-sm font-semibold text-ink/85 md:flex">
