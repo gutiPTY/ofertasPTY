@@ -14,6 +14,7 @@ interface OfertaDetalle {
   imagenUrl: string;
   precioOriginal: string | null;
   precioOferta: string | null;
+  porcentajeDescuento: number | null;
   provincia: string;
   distrito: string | null;
   direccion: string | null;
@@ -133,7 +134,7 @@ export default async function OfertaDetallePage({ params }: { params: Promise<{ 
             <FavoritoButton ofertaId={oferta.id} />
           </div>
 
-          {oferta.precioOferta && (
+          {oferta.precioOferta ? (
             <p className="font-display text-3xl font-semibold text-ember">
               ${oferta.precioOferta}
               {oferta.precioOriginal && (
@@ -141,7 +142,18 @@ export default async function OfertaDetallePage({ params }: { params: Promise<{ 
                   ${oferta.precioOriginal}
                 </span>
               )}
+              {oferta.porcentajeDescuento && (
+                <span className="ml-2 rounded-full bg-ember px-2 py-0.5 align-middle text-sm font-bold text-ember-ink">
+                  -{oferta.porcentajeDescuento}%
+                </span>
+              )}
             </p>
+          ) : (
+            oferta.porcentajeDescuento && (
+              <p className="font-display text-3xl font-semibold text-ember">
+                {oferta.porcentajeDescuento}% de descuento
+              </p>
+            )
           )}
 
           <p className="whitespace-pre-line text-sm leading-relaxed text-ink sm:text-base">

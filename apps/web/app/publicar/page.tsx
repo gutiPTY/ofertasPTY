@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 import { CrearOfertaInputSchema, DIAS_SEMANA_ORDEN, DIA_SEMANA_LABEL, PROVINCIAS_PANAMA } from "@ofertaspty/shared-types";
 import { createClient } from "@/lib/supabase/client";
 import { compressImage } from "@/lib/compressImage";
 import { useToast } from "@/components/ToastProvider";
+import PreviewModal, { type PreviewData } from "./PreviewModal";
 
 interface Categoria {
   id: string;
@@ -31,6 +32,8 @@ export default function PublicarPage() {
   const [imagenPreview, setImagenPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<PreviewData | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     return () => {
@@ -76,6 +79,30 @@ export default function PublicarPage() {
     });
   }
 
+  function handlePreview() {
+    if (!formRef.current) return;
+    const formData = new FormData(formRef.current);
+    const categoriaId = String(formData.get("categoriaId") ?? "");
+    const categoriaNombre = categorias.find((c) => c.id === categoriaId)?.nombre ?? "";
+
+    setPreview({
+      titulo: String(formData.get("titulo") ?? ""),
+      descripcion: String(formData.get("descripcion") ?? ""),
+      imagenUrl: imagenPreview ?? "",
+      precioOriginal: String(formData.get("precioOriginal") ?? ""),
+      precioOferta: String(formData.get("precioOferta") ?? ""),
+      porcentajeDescuento: String(formData.get("porcentajeDescuento") ?? ""),
+      provincia: String(formData.get("provincia") ?? ""),
+      distrito: String(formData.get("distrito") ?? ""),
+      direccion: String(formData.get("direccion") ?? ""),
+      linkExterno: String(formData.get("linkExterno") ?? ""),
+      fechaInicio: String(formData.get("fechaInicio") ?? ""),
+      fechaVencimiento: String(formData.get("fechaVencimiento") ?? ""),
+      categoriaNombre,
+      diaSemana: String(formData.get("diaSemana") ?? ""),
+    });
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -108,6 +135,7 @@ export default function PublicarPage() {
         imagenUrl: publicUrl,
         precioOriginal: formData.get("precioOriginal") || undefined,
         precioOferta: formData.get("precioOferta") || undefined,
+        porcentajeDescuento: formData.get("porcentajeDescuento") || undefined,
         provincia: formData.get("provincia"),
         distrito: formData.get("distrito") || undefined,
         direccion: formData.get("direccion") || undefined,
@@ -168,6 +196,7 @@ export default function PublicarPage() {
       </div>
 
       <form
+        ref={formRef}
         className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-6 sm:p-7"
         onSubmit={handleSubmit}
       >
@@ -229,6 +258,21 @@ export default function PublicarPage() {
             <input name="precioOferta" type="number" step="0.01" placeholder="0.00" className={INPUT_CLASS} />
           </label>
         </div>
+
+        <label className={LABEL_CLASS}>
+          Descuento en % (opcional)
+          <input
+            name="porcentajeDescuento"
+            type="number"
+            min="1"
+            max="99"
+            placeholder="Ej. 20"
+            className={INPUT_CLASS}
+          />
+          <span className="normal-case text-muted">
+            Usalo si la promo es "% de descuento" sin precios publicados.
+          </span>
+        </label>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className={LABEL_CLASS}>
@@ -307,14 +351,25 @@ export default function PublicarPage() {
 
         {error && <p className="text-sm text-critical">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-full bg-ember px-4 py-2.5 text-sm font-bold text-ember-ink transition hover:brightness-95 disabled:opacity-50"
-        >
-          {loading ? "Publicando…" : "Publicar"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handlePreview}
+            className="rounded-full border border-line px-4 py-2.5 text-sm font-bold text-ink transition hover:border-ember hover:text-ember"
+          >
+            Vista previa
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded-full bg-ember px-4 py-2.5 text-sm font-bold text-ember-ink transition hover:brightness-95 disabled:opacity-50"
+          >
+            {loading ? "Publicando…" : "Publicar"}
+          </button>
+        </div>
       </form>
+
+      {preview && <PreviewModal data={preview} onClose={() => setPreview(null)} />}
     </main>
   );
 }

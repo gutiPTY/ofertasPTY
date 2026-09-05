@@ -118,27 +118,30 @@ model Categoria {
 }
 
 model Oferta {
-  id               String       @id @default(uuid())
-  slug             String       @unique
-  titulo           String
-  descripcion      String
-  imagenUrl        String
-  precioOriginal   Decimal?
-  precioOferta     Decimal?
-  provincia        String
-  distrito         String?
-  direccion        String?
-  linkExterno      String?
-  fechaInicio      DateTime
-  fechaVencimiento DateTime
-  estado           EstadoOferta @default(PENDIENTE)
-  destacada        Boolean      @default(false) // true si viene de comercio con plan pago
+  id                  String       @id @default(uuid())
+  slug                String       @unique
+  titulo              String
+  descripcion         String
+  imagenUrl           String
+  precioOriginal      Decimal?
+  precioOferta        Decimal?
+  // Independiente de precioOriginal/precioOferta: promos "% de descuento"
+  // sin precios base publicados.
+  porcentajeDescuento Int?
+  provincia           String
+  distrito            String?
+  direccion           String?
+  linkExterno         String?
+  fechaInicio         DateTime
+  fechaVencimiento    DateTime
+  estado              EstadoOferta @default(PENDIENTE)
+  destacada           Boolean      @default(false) // true si viene de comercio con plan pago
   // Momento en que pasó a PUBLICADA (distinto de creadoEn/actualizadoEn, que
   // cambian con la edición del admin antes de publicarse) — usado por el
   // digest semanal de Épica 9 para saber qué es "nuevo" desde la última
   // corrida, sin depender de un cursor por usuario.
-  publicadaEn      DateTime?
-  diaSemana        DiaSemana? // solo para promos recurrentes de un día fijo (ver Épica 9)
+  publicadaEn         DateTime?
+  diaSemana           DiaSemana? // solo para promos recurrentes de un día fijo (ver Épica 9)
 
   // Remoción admin: nunca se borra la fila (preserva Moderacion/Reporte/
   // OfertaEdicion para auditoría) — se oculta de todas las vistas públicas y

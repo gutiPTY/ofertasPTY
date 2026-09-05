@@ -29,6 +29,7 @@ interface OfertaPendiente {
   imagenUrl: string;
   precioOriginal: string | null;
   precioOferta: string | null;
+  porcentajeDescuento: number | null;
   provincia: string;
   distrito: string | null;
   direccion: string | null;

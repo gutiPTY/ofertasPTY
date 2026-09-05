@@ -10,6 +10,9 @@ const OfertaCamposSchema = z.object({
   imagenUrl: z.string().url(),
   precioOriginal: z.coerce.number().positive().optional(),
   precioOferta: z.coerce.number().positive().optional(),
+  // Independiente de precioOriginal/precioOferta: sirve para promos "% de
+  // descuento" sin precios base publicados (ver skill buscar-ofertas-panama).
+  porcentajeDescuento: z.coerce.number().int().min(1).max(99).optional(),
   provincia: z.enum(PROVINCIAS_PANAMA),
   distrito: z.string().min(1).max(120).optional(),
   direccion: z.string().min(1).max(255).optional(),

@@ -9,6 +9,7 @@ interface OfertaCardProps {
   provincia: string;
   precioOferta: string | null;
   precioOriginal: string | null;
+  porcentajeDescuento?: number | null;
   categoria: { nombre: string };
 }
 
@@ -19,6 +20,7 @@ export default function OfertaCard({
   provincia,
   precioOferta,
   precioOriginal,
+  porcentajeDescuento,
   categoria,
 }: OfertaCardProps) {
   const { fg } = categoriaColor(categoria.nombre);
@@ -42,11 +44,16 @@ export default function OfertaCard({
         >
           {categoria.nombre}
         </span>
+        {porcentajeDescuento && (
+          <span className="absolute right-2 top-2 rounded-full bg-ember px-2 py-0.5 text-[11px] font-bold text-ember-ink">
+            -{porcentajeDescuento}%
+          </span>
+        )}
       </div>
       <div className="flex flex-col gap-1 p-3">
         <span className="text-xs font-medium text-muted">{provincia}</span>
         <span className="font-display text-sm font-semibold leading-snug text-ink">{titulo}</span>
-        {precioOferta && (
+        {precioOferta ? (
           <span className="font-display text-base font-semibold text-ember">
             ${precioOferta}
             {precioOriginal && (
@@ -55,6 +62,12 @@ export default function OfertaCard({
               </span>
             )}
           </span>
+        ) : (
+          porcentajeDescuento && (
+            <span className="font-display text-base font-semibold text-ember">
+              {porcentajeDescuento}% de descuento
+            </span>
+          )
         )}
       </div>
     </Link>

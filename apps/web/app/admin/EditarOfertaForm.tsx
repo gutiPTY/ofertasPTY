@@ -14,6 +14,7 @@ interface OfertaEditable {
   imagenUrl: string;
   precioOriginal: string | null;
   precioOferta: string | null;
+  porcentajeDescuento: number | null;
   provincia: string;
   distrito: string | null;
   direccion: string | null;
@@ -43,6 +44,8 @@ function valorBase(oferta: OfertaEditable, campo: string): string {
       return oferta.precioOriginal ?? "";
     case "precioOferta":
       return oferta.precioOferta ?? "";
+    case "porcentajeDescuento":
+      return oferta.porcentajeDescuento?.toString() ?? "";
     case "distrito":
       return oferta.distrito ?? "";
     case "direccion":
@@ -72,6 +75,7 @@ const CAMPOS_EDITABLES = [
   "imagenUrl",
   "precioOriginal",
   "precioOferta",
+  "porcentajeDescuento",
   "provincia",
   "distrito",
   "direccion",
@@ -152,6 +156,15 @@ export default function EditarOfertaForm({
           className="w-1/2 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
         />
       </div>
+      <input
+        name="porcentajeDescuento"
+        type="number"
+        min="1"
+        max="99"
+        defaultValue={oferta.porcentajeDescuento ?? ""}
+        placeholder="Descuento %"
+        className="rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+      />
       <select
         name="provincia"
         defaultValue={oferta.provincia}
