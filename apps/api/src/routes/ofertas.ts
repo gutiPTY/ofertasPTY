@@ -98,6 +98,7 @@ export default async function ofertasRoutes(fastify: FastifyInstance) {
 
     const where = {
       estado: "PUBLICADA" as const,
+      oculta: false,
       ...(filtros.categoriaId ? { categoriaId: filtros.categoriaId } : {}),
       ...(filtros.provincia ? { provincia: filtros.provincia } : {}),
       ...(filtros.q
@@ -136,7 +137,7 @@ export default async function ofertasRoutes(fastify: FastifyInstance) {
   // paginación (Épica 5).
   fastify.get("/ofertas/destacadas", async (_request, reply) => {
     const ofertas = await prisma.oferta.findMany({
-      where: { estado: "PUBLICADA", destacada: true },
+      where: { estado: "PUBLICADA", destacada: true, oculta: false },
       orderBy: { creadoEn: "desc" },
       take: 6,
       include: { categoria: true },
@@ -148,7 +149,7 @@ export default async function ofertasRoutes(fastify: FastifyInstance) {
     const { slug } = request.params as { slug: string };
 
     const oferta = await prisma.oferta.findFirst({
-      where: { slug, estado: "PUBLICADA" },
+      where: { slug, estado: "PUBLICADA", oculta: false },
       include: {
         categoria: true,
         // Endpoint público sin auth: nunca exponer ruc/direccionFiscal/
