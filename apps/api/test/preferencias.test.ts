@@ -73,8 +73,6 @@ describe("/preferencias", () => {
   }, 15000);
 
   it("PUT /preferencias/mine rechaza una provincia inválida", async () => {
-    // El resto de la API tampoco traduce ZodError a 400 (no hay
-    // setErrorHandler global) — se mantiene la misma convención acá.
     const app = buildApp();
     const res = await app.inject({
       method: "PUT",
@@ -82,7 +80,8 @@ describe("/preferencias", () => {
       headers: { authorization: `Bearer ${usuario.accessToken}` },
       payload: { categoriaIds: [], provincias: ["Provincia Inventada"] },
     });
-    expect(res.statusCode).toBe(500);
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toBe("validacion");
   }, 15000);
 
   it("rechaza sin token", async () => {

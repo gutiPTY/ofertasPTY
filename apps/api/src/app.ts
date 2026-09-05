@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
+import { ZodError } from "zod";
 import { env } from "./env.js";
 import { loggerOptions } from "./lib/logger.js";
 import supabaseAuthPlugin from "./plugins/supabase-auth.js";
@@ -40,6 +41,24 @@ export function buildApp(): FastifyInstance {
   app.register(reportesRoutes);
   app.register(comerciosRoutes);
   app.register(adminRoutes);
+
+  // Sin esto, un .parse() de Zod que falla (input inválido del cliente)
+  // propagaba como excepción no manejada y Fastify respondía 500 — una
+  // respuesta de "error del servidor" para lo que en realidad es un 400
+  // de "el cliente mandó datos inválidos". Se deja pasar cualquier otro
+  // error al manejador default de Fastify (reply.send(error)).
+  app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof ZodError) {
+      return reply.code(400).send({
+        error: "validacion",
+        issues: error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+    return reply.send(error);
+  });
 
   return app;
 }
