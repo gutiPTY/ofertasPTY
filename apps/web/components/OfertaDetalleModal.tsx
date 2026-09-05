@@ -70,7 +70,7 @@ export default function OfertaDetalleModal({
             alt={oferta.titulo}
             fill
             sizes="(max-width: 640px) 100vw, 512px"
-            className="object-cover object-top"
+            className="object-contain"
           />
           <button
             type="button"
