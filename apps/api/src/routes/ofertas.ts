@@ -50,6 +50,7 @@ export default async function ofertasRoutes(fastify: FastifyInstance) {
           imagenUrl: body.imagenUrl,
           precioOriginal: body.precioOriginal,
           precioOferta: body.precioOferta,
+          porcentajeDescuento: body.porcentajeDescuento,
           provincia: body.provincia,
           distrito: body.distrito,
           direccion: body.direccion,

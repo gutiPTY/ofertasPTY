@@ -14,6 +14,7 @@ export interface OfertaDetalleData {
   imagenUrl: string;
   precioOriginal: string | null;
   precioOferta: string | null;
+  porcentajeDescuento: number | null;
   provincia: string;
   distrito: string | null;
   direccion: string | null;
@@ -92,7 +93,7 @@ export default function OfertaDetalleModal({
             <h2 className="font-display text-xl font-semibold leading-tight text-ink">{oferta.titulo}</h2>
           </div>
 
-          {oferta.precioOferta && (
+          {oferta.precioOferta ? (
             <p className="font-display text-2xl font-semibold text-ember">
               ${oferta.precioOferta}
               {oferta.precioOriginal && (
@@ -100,7 +101,18 @@ export default function OfertaDetalleModal({
                   ${oferta.precioOriginal}
                 </span>
               )}
+              {oferta.porcentajeDescuento && (
+                <span className="ml-2 rounded-full bg-ember px-2 py-0.5 align-middle text-xs font-bold text-ember-ink">
+                  -{oferta.porcentajeDescuento}%
+                </span>
+              )}
             </p>
+          ) : (
+            oferta.porcentajeDescuento && (
+              <p className="font-display text-2xl font-semibold text-ember">
+                {oferta.porcentajeDescuento}% de descuento
+              </p>
+            )
           )}
 
           <p className="whitespace-pre-line text-sm leading-relaxed text-ink">{oferta.descripcion}</p>

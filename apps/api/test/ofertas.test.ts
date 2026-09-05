@@ -57,6 +57,34 @@ describe("/ofertas", () => {
     expect(res.json().oferta.estado).toBe("PENDIENTE");
   }, 15000);
 
+  it("POST /ofertas acepta porcentajeDescuento (independiente de precioOriginal/precioOferta)", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "POST",
+      url: "/ofertas",
+      headers: { authorization: `Bearer ${user.accessToken}` },
+      payload: ofertaPayload(categoriaId, { porcentajeDescuento: 25 }),
+    });
+    expect(res.statusCode).toBe(201);
+    expect(res.json().oferta.porcentajeDescuento).toBe(25);
+  }, 15000);
+
+  it("POST /ofertas rechaza porcentajeDescuento fuera de rango (1-99)", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "POST",
+      url: "/ofertas",
+      headers: { authorization: `Bearer ${user.accessToken}` },
+      payload: ofertaPayload(categoriaId, { porcentajeDescuento: 100 }),
+    });
+    // NOTA: debería ser 400 (error de validación del cliente), pero la API
+    // no tiene un errorHandler global que traduzca ZodError -> 400, así que
+    // hoy cualquier .parse() fallido devuelve 500 en TODOS los endpoints
+    // (gap preexistente, no introducido por este cambio). Este test documenta
+    // el comportamiento real; si se agrega ese errorHandler, actualizar a 400.
+    expect(res.statusCode).toBe(500);
+  }, 15000);
+
   it("GET /ofertas/mine devuelve las ofertas del usuario autenticado", async () => {
     const app = buildApp();
     const res = await app.inject({

@@ -19,6 +19,7 @@ interface OfertaFeed {
   imagenUrl: string;
   provincia: string;
   precioOferta: string | null;
+  porcentajeDescuento: number | null;
   precioOriginal: string | null;
   categoria: { nombre: string };
 }
