@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Fredoka, Manrope } from "next/font/google";
 import Header from "@/components/Header";
+import { ToastProvider } from "@/components/ToastProvider";
 import "./globals.css";
 
 const fredoka = Fredoka({
@@ -50,8 +51,10 @@ export default function RootLayout({
       <body
         className={`${fredoka.variable} ${manrope.variable} bg-paper font-sans text-ink antialiased`}
       >
-        <Header />
-        {children}
+        <ToastProvider>
+          <Header />
+          {children}
+        </ToastProvider>
       </body>
       {adsenseClientId && (
         <Script

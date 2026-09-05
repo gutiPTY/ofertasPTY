@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
-export async function guardarPreferencias(formData: FormData) {
+export async function guardarPreferencias(_prevState: { ok: boolean } | null, formData: FormData) {
   const supabase = await createClient();
   const {
     data: { session },
@@ -13,7 +13,7 @@ export async function guardarPreferencias(formData: FormData) {
   const categoriaIds = formData.getAll("categoriaIds").map(String);
   const provincias = formData.getAll("provincias").map(String);
 
-  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/preferencias/mine`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/preferencias/mine`, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${session.access_token}`,
@@ -23,4 +23,5 @@ export async function guardarPreferencias(formData: FormData) {
   });
 
   revalidatePath("/perfil");
+  return { ok: res.ok };
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import type { Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { useToast } from "@/components/ToastProvider";
 import { categoriaColor } from "@/components/CategoriaIcon";
 import OfertaDetalleModal, { type OfertaDetalleData } from "@/components/OfertaDetalleModal";
 import ContactarAdminModal from "@/components/ContactarAdminModal";
@@ -184,6 +185,7 @@ function DatoRow({ label, valor }: { label: string; valor: string }) {
 export default function SolicitudComercioPage() {
   const router = useRouter();
   const supabase = createClient();
+  const showToast = useToast();
 
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -286,6 +288,7 @@ export default function SolicitudComercioPage() {
       if (!res.ok) throw new Error("No se pudo guardar el logo.");
 
       setMine((prev) => (prev ? { ...prev, comercio: { ...prev.comercio, logoUrl: publicUrl } } : prev));
+      showToast("Logo actualizado.");
     } catch (err) {
       setLogoError(err instanceof Error ? err.message : "No se pudo subir el logo.");
     } finally {
@@ -367,6 +370,7 @@ export default function SolicitudComercioPage() {
         cache: "no-store",
       });
       setMine(refreshed.ok ? await refreshed.json() : null);
+      showToast("Solicitud enviada — un administrador la va a revisar.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado");
     } finally {

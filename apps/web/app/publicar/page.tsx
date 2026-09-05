@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 import { CrearOfertaInputSchema, DIAS_SEMANA_ORDEN, DIA_SEMANA_LABEL, PROVINCIAS_PANAMA } from "@ofertaspty/shared-types";
 import { createClient } from "@/lib/supabase/client";
+import { useToast } from "@/components/ToastProvider";
 
 interface Categoria {
   id: string;
@@ -21,6 +22,7 @@ const LABEL_CLASS = "flex flex-col gap-1.5 text-xs font-semibold uppercase track
 export default function PublicarPage() {
   const router = useRouter();
   const supabase = createClient();
+  const showToast = useToast();
 
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -139,6 +141,7 @@ export default function PublicarPage() {
         return;
       }
 
+      showToast("Oferta enviada — queda pendiente de revisión.");
       router.push("/mis-ofertas");
       router.refresh();
     } catch (err) {

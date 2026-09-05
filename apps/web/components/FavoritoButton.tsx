@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useToast } from "@/components/ToastProvider";
 
 function StarIcon({ filled }: { filled: boolean }) {
   return (
@@ -25,6 +26,7 @@ function StarIcon({ filled }: { filled: boolean }) {
 export default function FavoritoButton({ ofertaId }: { ofertaId: string }) {
   const router = useRouter();
   const supabase = createClient();
+  const showToast = useToast();
   const [favorito, setFavorito] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -55,7 +57,9 @@ export default function FavoritoButton({ ofertaId }: { ofertaId: string }) {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (res.ok) {
-      setFavorito((await res.json()).favorito);
+      const { favorito: nuevoValor } = await res.json();
+      setFavorito(nuevoValor);
+      showToast(nuevoValor ? "Guardado en favoritos" : "Quitado de favoritos");
     }
     setLoading(false);
   }
