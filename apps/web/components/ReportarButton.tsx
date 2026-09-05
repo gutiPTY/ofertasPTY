@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useToast } from "@/components/ToastProvider";
 
 export default function ReportarButton({ ofertaId }: { ofertaId: string }) {
   const router = useRouter();
   const supabase = createClient();
+  const showToast = useToast();
   const [abierto, setAbierto] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [estado, setEstado] = useState<"idle" | "loading" | "enviado" | "error">("idle");
@@ -34,6 +36,7 @@ export default function ReportarButton({ ofertaId }: { ofertaId: string }) {
 
     if (res.ok || res.status === 409) {
       setEstado("enviado");
+      showToast("Reporte enviado, gracias.");
     } else {
       setEstado("error");
     }
