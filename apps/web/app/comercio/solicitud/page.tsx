@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import type { Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { compressImage } from "@/lib/compressImage";
 import { categoriaColor } from "@/components/CategoriaIcon";
 import OfertaDetalleModal, { type OfertaDetalleData } from "@/components/OfertaDetalleModal";
 import ContactarAdminModal from "@/components/ContactarAdminModal";
@@ -262,13 +263,14 @@ export default function SolicitudComercioPage() {
 
     setLogoSubiendo(true);
     try {
+      const comprimido = await compressImage(file);
       // Mismo bucket público que usan las imágenes de oferta ("ofertas") y
       // la misma convención de carpeta por usuario que exige la política
       // RLS de Storage — solo cambia el prefijo del archivo.
-      const path = `${session.user.id}/logo-${Date.now()}-${file.name}`;
+      const path = `${session.user.id}/logo-${Date.now()}-${comprimido.name}`;
       const { error: uploadError } = await supabase.storage
         .from("ofertas")
-        .upload(path, file, { contentType: file.type });
+        .upload(path, comprimido, { contentType: comprimido.type });
       if (uploadError) throw uploadError;
 
       const {
