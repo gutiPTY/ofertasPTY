@@ -23,9 +23,16 @@ import {
 const OFERTA_ESTADOS_EDITABLES = new Set(["PENDIENTE", "EN_REVISION"]);
 const HISTORIAL_ESTADOS = ["PUBLICADA", "RECHAZADA", "EXPIRADA"] as const;
 const HISTORIAL_PAGE_SIZE = 15;
+const TODAS_PAGE_SIZE = 20;
+const TODOS_ESTADOS = ["PENDIENTE", "EN_REVISION", "PUBLICADA", "RECHAZADA", "EXPIRADA"] as const;
 
 const historialQuerySchema = z.object({
   estado: z.enum(HISTORIAL_ESTADOS).default("PUBLICADA"),
+  page: z.coerce.number().int().positive().default(1),
+});
+
+const todasOfertasQuerySchema = z.object({
+  estado: z.enum(TODOS_ESTADOS).optional(),
   page: z.coerce.number().int().positive().default(1),
 });
 
@@ -49,7 +56,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     { preHandler: requireAdmin },
     async (_request, reply) => {
       const ofertas = await prisma.oferta.findMany({
-        where: { estado: "PENDIENTE" },
+        where: { estado: "PENDIENTE", oculta: false },
         orderBy: { creadoEn: "asc" },
         include: { categoria: true, creadoPor: true, comercio: true },
       });
@@ -77,7 +84,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     { preHandler: requireAdmin },
     async (_request, reply) => {
       const ofertas = await prisma.oferta.findMany({
-        where: { estado: "EN_REVISION" },
+        where: { estado: "EN_REVISION", oculta: false },
         orderBy: { actualizadoEn: "asc" },
         include: { categoria: true, creadoPor: true, reportes: true },
       });
@@ -144,10 +151,11 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     { preHandler: requireAdmin },
     async (request, reply) => {
       const { estado, page } = historialQuerySchema.parse(request.query);
+      const where = { estado, oculta: false };
 
       const [ofertas, total] = await Promise.all([
         prisma.oferta.findMany({
-          where: { estado },
+          where,
           orderBy: { actualizadoEn: "desc" },
           skip: (page - 1) * HISTORIAL_PAGE_SIZE,
           take: HISTORIAL_PAGE_SIZE,
@@ -158,10 +166,72 @@ export default async function adminRoutes(fastify: FastifyInstance) {
             ediciones: { orderBy: { fecha: "desc" }, take: 1, include: { admin: true } },
           },
         }),
-        prisma.oferta.count({ where: { estado } }),
+        prisma.oferta.count({ where }),
       ]);
 
       return reply.send({ ofertas, total, page, pageSize: HISTORIAL_PAGE_SIZE });
+    },
+  );
+
+  // "Todas las ofertas" — a diferencia de /pendientes, /en-revision y
+  // /historial (colas separadas por estado), esta lista TODO sin filtrar
+  // por defecto, incluidas las ocultas (con su badge), para que el admin
+  // pueda encontrar y gestionar cualquier oferta desde un solo lugar.
+  fastify.get(
+    "/admin/ofertas",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const { estado, page } = todasOfertasQuerySchema.parse(request.query);
+      const where = estado ? { estado } : {};
+
+      const [ofertas, total] = await Promise.all([
+        prisma.oferta.findMany({
+          where,
+          orderBy: { creadoEn: "desc" },
+          skip: (page - 1) * TODAS_PAGE_SIZE,
+          take: TODAS_PAGE_SIZE,
+          include: { categoria: true, creadoPor: true },
+        }),
+        prisma.oferta.count({ where }),
+      ]);
+
+      return reply.send({ ofertas, total, page, pageSize: TODAS_PAGE_SIZE });
+    },
+  );
+
+  // Remoción admin: nunca borra la fila (preserva Moderacion/Reporte/
+  // OfertaEdicion para auditoría, ver CLAUDE.md) — solo la oculta de toda
+  // vista pública y de las colas normales del admin. Se puede deshacer con
+  // /mostrar. Sin restricción de estado: un admin puede ocultar cualquier
+  // oferta desde "Todas las ofertas", sea cual sea su estado actual.
+  fastify.post(
+    "/admin/ofertas/:id/ocultar",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const { id } = idParamsSchema.parse(request.params);
+      const admin = await currentAdmin(request.user!.id);
+
+      const oferta = await prisma.oferta.update({
+        where: { id },
+        data: { oculta: true, ocultaEn: new Date(), ocultaPorId: admin.id },
+      });
+
+      return reply.send({ oferta });
+    },
+  );
+
+  fastify.post(
+    "/admin/ofertas/:id/mostrar",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const { id } = idParamsSchema.parse(request.params);
+
+      const oferta = await prisma.oferta.update({
+        where: { id },
+        data: { oculta: false, ocultaEn: null, ocultaPorId: null },
+      });
+
+      return reply.send({ oferta });
     },
   );
 

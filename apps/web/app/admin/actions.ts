@@ -100,3 +100,21 @@ export async function togglePlanPago(id: string) {
   });
   revalidatePath("/admin");
 }
+
+export async function ocultarOferta(id: string) {
+  const token = await accessToken();
+  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/ofertas/${id}/ocultar`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  revalidatePath("/admin");
+}
+
+export async function mostrarOferta(id: string) {
+  const token = await accessToken();
+  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/ofertas/${id}/mostrar`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  revalidatePath("/admin");
+}

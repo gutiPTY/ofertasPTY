@@ -2,6 +2,7 @@ import cron from "node-cron";
 import { buildApp } from "./app.js";
 import { env } from "./env.js";
 import { expirarOfertasVencidas } from "./jobs/expirar-ofertas.js";
+import { ocultarOfertasExpiradasViejas } from "./jobs/ocultar-expiradas.js";
 import { enviarDigestPreferencias } from "./jobs/digest-preferencias.js";
 import { enviarNotificacionesFavoritos } from "./jobs/notificaciones-favoritos.js";
 
@@ -22,6 +23,18 @@ cron.schedule("0 3 * * *", async () => {
     app.log.info({ count }, "job expirar-ofertas: ofertas expiradas");
   } catch (error) {
     app.log.error(error, "job expirar-ofertas falló");
+  }
+});
+
+// Limpieza automática: ofertas que llevan 1+ día EXPIRADA se ocultan (nunca
+// se borran, ver jobs/ocultar-expiradas.ts). Corre justo después del job de
+// expiración de arriba.
+cron.schedule("30 3 * * *", async () => {
+  try {
+    const count = await ocultarOfertasExpiradasViejas();
+    app.log.info({ count }, "job ocultar-expiradas: ofertas ocultadas");
+  } catch (error) {
+    app.log.error(error, "job ocultar-expiradas falló");
   }
 });
 

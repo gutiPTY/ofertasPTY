@@ -5,6 +5,7 @@ import InsigniaColaboradorConfiable from "@/components/InsigniaColaboradorConfia
 import EditarOfertaForm from "./EditarOfertaForm";
 import DashboardStats from "./DashboardStats";
 import HistorialOfertas from "./HistorialOfertas";
+import TodasLasOfertas from "./TodasLasOfertas";
 import ComerciosSection from "./ComerciosSection";
 import {
   aprobarOferta,
@@ -209,7 +210,7 @@ function OfertaCard({
 export default async function AdminPage({
   searchParams: searchParamsPromise,
 }: {
-  searchParams: Promise<{ historialEstado?: string; historialPage?: string }>;
+  searchParams: Promise<{ historialEstado?: string; historialPage?: string; todasPage?: string }>;
 }) {
   const searchParams = await searchParamsPromise;
   const supabase = await createClient();
@@ -253,6 +254,7 @@ export default async function AdminPage({
     HISTORIAL_ESTADOS.has(searchParams.historialEstado ?? "") ? searchParams.historialEstado : "PUBLICADA"
   ) as "PUBLICADA" | "RECHAZADA" | "EXPIRADA";
   const historialPage = Number(searchParams.historialPage ?? "1") || 1;
+  const todasPage = Number(searchParams.todasPage ?? "1") || 1;
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-10 px-4 py-8 sm:px-6">
@@ -288,6 +290,13 @@ export default async function AdminPage({
         <h2 className="font-display text-xl font-semibold text-ink">Historial de moderación</h2>
         <Suspense fallback={<HistorialSkeleton />}>
           <HistorialOfertas estado={historialEstado} page={historialPage} />
+        </Suspense>
+      </section>
+
+      <section id="todas" className="flex flex-col gap-4">
+        <h2 className="font-display text-xl font-semibold text-ink">Todas las ofertas</h2>
+        <Suspense fallback={<HistorialSkeleton />}>
+          <TodasLasOfertas page={todasPage} />
         </Suspense>
       </section>
 
