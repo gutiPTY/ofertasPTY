@@ -106,7 +106,7 @@ export default async function OfertaDetallePage({ params }: { params: Promise<{ 
             fill
             priority
             sizes="(max-width: 1024px) 100vw, 512px"
-            className="object-cover object-top"
+            className="object-contain"
           />
         </div>
 

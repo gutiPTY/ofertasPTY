@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 import { CrearOfertaInputSchema, DIAS_SEMANA_ORDEN, DIA_SEMANA_LABEL, PROVINCIAS_PANAMA } from "@ofertaspty/shared-types";
 import { createClient } from "@/lib/supabase/client";
+import { compressImage } from "@/lib/compressImage";
 
 interface Categoria {
   id: string;
@@ -52,7 +53,7 @@ export default function PublicarPage() {
       .catch(() => setCategorias([]));
   }, []);
 
-  function handleImagenChange(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImagenChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -65,10 +66,11 @@ export default function PublicarPage() {
       return;
     }
     setError(null);
-    setImagenFile(file);
+    const comprimida = await compressImage(file);
+    setImagenFile(comprimida);
     setImagenPreview((prev) => {
       if (prev) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(file);
+      return URL.createObjectURL(comprimida);
     });
   }
 

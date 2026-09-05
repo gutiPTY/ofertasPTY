@@ -34,7 +34,7 @@ export default function OfertaCard({
           alt={titulo}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-          className="object-cover object-top"
+          className="object-contain"
         />
         <span
           className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-bold text-white"
