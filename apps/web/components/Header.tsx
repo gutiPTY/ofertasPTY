@@ -2,13 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Logo from "@/components/Logo";
 import LogoutButton from "@/components/LogoutButton";
-import SearchBox from "@/components/SearchBox";
 import NotificacionesBell from "@/components/NotificacionesBell";
-
-interface Categoria {
-  id: string;
-  nombre: string;
-}
 
 export default async function Header() {
   const supabase = await createClient();
@@ -27,13 +21,6 @@ export default async function Header() {
       role = (await res.json()).role ?? null;
     }
   }
-
-  const categoriasRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categorias`, {
-    cache: "no-store",
-  }).catch(() => null);
-  const categorias: Categoria[] = categoriasRes?.ok
-    ? (await categoriasRes.json()).categorias.slice(0, 5)
-    : [];
 
   return (
     <div className="border-b border-line bg-paper">
@@ -74,28 +61,14 @@ export default async function Header() {
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-6 px-4 py-4 sm:px-6">
+      <div className="mx-auto flex max-w-4xl items-center gap-6 px-4 py-4 sm:px-6">
         <Logo />
-
-        <nav className="hidden flex-1 items-center gap-6 text-sm font-semibold text-ink/85 md:flex">
-          {categorias.map((categoria) => (
-            <Link
-              key={categoria.id}
-              href={`/?categoriaId=${categoria.id}`}
-              className="hover:text-ember"
-            >
-              {categoria.nombre}
-            </Link>
-          ))}
-        </nav>
-
-        <SearchBox />
 
         {user && <NotificacionesBell />}
 
         <Link
           href="/publicar"
-          className="ml-auto shrink-0 rounded-full bg-ember px-4 py-2 text-sm font-bold text-ember-ink transition hover:brightness-95 md:ml-0"
+          className="ml-auto shrink-0 rounded-full bg-ember px-4 py-2 text-sm font-bold text-ember-ink transition hover:brightness-95"
         >
           Publicar oferta
         </Link>
