@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Fredoka, Manrope } from "next/font/google";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { ToastProvider } from "@/components/ToastProvider";
 import "./globals.css";
 
@@ -54,6 +55,7 @@ export default function RootLayout({
         <ToastProvider>
           <Header />
           {children}
+          <Footer />
         </ToastProvider>
       </body>
       {adsenseClientId && (
