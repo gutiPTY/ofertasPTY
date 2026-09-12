@@ -16,6 +16,9 @@ export default function Footer() {
           <Link href="/privacidad" className="hover:text-ink">
             Política de privacidad
           </Link>
+          <Link href="/terminos" className="hover:text-ink">
+            Términos de servicio
+          </Link>
           <Link href="/contacto" className="hover:text-ink">
             Contacto
           </Link>
