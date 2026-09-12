@@ -10,6 +10,7 @@ interface OfertaCardProps {
   precioOferta: string | null;
   precioOriginal: string | null;
   porcentajeDescuento?: number | null;
+  fechaVencimiento: string;
   categoria: { nombre: string };
 }
 
@@ -21,9 +22,14 @@ export default function OfertaCard({
   precioOferta,
   precioOriginal,
   porcentajeDescuento,
+  fechaVencimiento,
   categoria,
 }: OfertaCardProps) {
   const { fg } = categoriaColor(categoria.nombre);
+  const vigenciaHasta = new Date(fechaVencimiento).toLocaleDateString("es-PA", {
+    day: "numeric",
+    month: "short",
+  });
 
   return (
     <Link
@@ -69,6 +75,7 @@ export default function OfertaCard({
             </span>
           )
         )}
+        <span className="text-xs text-muted">Vence {vigenciaHasta}</span>
       </div>
     </Link>
   );

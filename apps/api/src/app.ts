@@ -13,6 +13,7 @@ import favoritosRoutes from "./routes/favoritos.js";
 import notificacionesRoutes from "./routes/notificaciones.js";
 import preferenciasRoutes from "./routes/preferencias.js";
 import reportesRoutes from "./routes/reportes.js";
+import valoracionesRoutes from "./routes/valoraciones.js";
 import comerciosRoutes from "./routes/comercios.js";
 import adminRoutes from "./routes/admin.js";
 
@@ -39,6 +40,7 @@ export function buildApp(): FastifyInstance {
   app.register(notificacionesRoutes);
   app.register(preferenciasRoutes);
   app.register(reportesRoutes);
+  app.register(valoracionesRoutes);
   app.register(comerciosRoutes);
   app.register(adminRoutes);
 

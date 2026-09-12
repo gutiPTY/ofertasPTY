@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { REPUTACION_INSIGNIA_UMBRAL } from "@ofertaspty/shared-types";
 import { createClient } from "@/lib/supabase/server";
@@ -47,29 +46,21 @@ export default async function MisOfertasPage() {
             {ofertas.length} {ofertas.length === 1 ? "oferta publicada" : "ofertas publicadas"}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          {usuario && (
-            <div className="flex flex-col items-end gap-1">
-              <div className="flex items-center gap-1.5 rounded-full bg-spark-bg py-1.5 pl-2 pr-3 text-sm font-bold text-warning">
-                <FlameIcon className="h-4 w-4 shrink-0" />
-                {usuario.reputacion} pts
-                {usuario.reputacion >= REPUTACION_INSIGNIA_UMBRAL && <InsigniaColaboradorConfiable />}
-              </div>
-              {usuario.reputacion < REPUTACION_INSIGNIA_UMBRAL && (
-                <span className="text-xs text-muted">
-                  Faltan {REPUTACION_INSIGNIA_UMBRAL - usuario.reputacion} para la insignia de
-                  Colaborador confiable
-                </span>
-              )}
+        {usuario && (
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-1.5 rounded-full bg-spark-bg py-1.5 pl-2 pr-3 text-sm font-bold text-warning">
+              <FlameIcon className="h-4 w-4 shrink-0" />
+              {usuario.reputacion} pts
+              {usuario.reputacion >= REPUTACION_INSIGNIA_UMBRAL && <InsigniaColaboradorConfiable />}
             </div>
-          )}
-          <Link
-            href="/publicar"
-            className="rounded-full bg-ember px-4 py-2 text-sm font-bold text-ember-ink transition hover:brightness-95"
-          >
-            Publicar oferta
-          </Link>
-        </div>
+            {usuario.reputacion < REPUTACION_INSIGNIA_UMBRAL && (
+              <span className="text-xs text-muted">
+                Faltan {REPUTACION_INSIGNIA_UMBRAL - usuario.reputacion} para la insignia de
+                Colaborador confiable
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <MisOfertasListado ofertas={ofertas} />

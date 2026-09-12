@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { DIA_SEMANA_LABEL, type DiaSemana } from "@ofertaspty/shared-types";
 import FavoritoButton from "@/components/FavoritoButton";
 import ReportarButton from "@/components/ReportarButton";
+import ValoracionButtons from "@/components/ValoracionButtons";
 import AdUnit from "@/components/AdUnit";
 
 interface OfertaDetalle {
@@ -22,6 +23,8 @@ interface OfertaDetalle {
   fechaInicio: string;
   fechaVencimiento: string;
   diaSemana?: DiaSemana | null;
+  valoracionesBuenas: number;
+  valoracionesMalas: number;
   categoria: { nombre: string };
   comercio: { nombre: string; logoUrl: string | null } | null;
 }
@@ -81,8 +84,39 @@ export default async function OfertaDetallePage({ params }: { params: Promise<{ 
     year: "numeric",
   });
 
+  const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
+  const precio = oferta.precioOferta ?? oferta.precioOriginal;
+  // schema.org Offer + Organization (Épica 6/SEO): ayuda a los motores de
+  // búsqueda a entender precio/vigencia/vendedor de cada ficha. `seller`
+  // usa solo campos públicos del comercio (nunca ruc/direccionFiscal, ver
+  // el mismo criterio de apps/api/src/routes/ofertas.ts); si la oferta no
+  // tiene comercio vinculado (ej. curada por el equipo), el vendedor es la
+  // plataforma misma.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Offer",
+    name: oferta.titulo,
+    description: oferta.descripcion,
+    image: oferta.imagenUrl,
+    url: `${siteUrl}/ofertas/${slug}`,
+    ...(precio ? { priceCurrency: "USD", price: precio } : {}),
+    availability: "https://schema.org/InStock",
+    validFrom: oferta.fechaInicio,
+    priceValidUntil: oferta.fechaVencimiento,
+    areaServed: oferta.provincia,
+    seller: {
+      "@type": "Organization",
+      name: oferta.comercio?.nombre ?? "Encuentra Ofertas PTY",
+      ...(oferta.comercio?.logoUrl ? { logo: oferta.comercio.logoUrl } : {}),
+    },
+  };
+
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Link
         href="/"
         className="flex w-fit items-center gap-1.5 text-sm font-semibold text-muted transition hover:text-ink"
@@ -183,6 +217,12 @@ export default async function OfertaDetallePage({ params }: { params: Promise<{ 
               </a>
             )}
           </div>
+
+          <ValoracionButtons
+            ofertaId={oferta.id}
+            buenasIniciales={oferta.valoracionesBuenas}
+            malasIniciales={oferta.valoracionesMalas}
+          />
 
           <ReportarButton ofertaId={oferta.id} />
         </div>

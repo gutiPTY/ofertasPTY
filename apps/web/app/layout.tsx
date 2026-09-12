@@ -50,8 +50,6 @@ export default function RootLayout({
     <html lang="es">
       <head>
         {adsenseClientId && (
-          // eslint-disable-next-line @next/next/no-sync-scripts -- Google pide este
-          // script tal cual, literal dentro de <head>, para verificar el sitio.
           <script
             async
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`}
