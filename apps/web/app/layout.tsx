@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Fredoka, Manrope } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -49,6 +48,17 @@ export default function RootLayout({
 
   return (
     <html lang="es">
+      <head>
+        {adsenseClientId && (
+          // eslint-disable-next-line @next/next/no-sync-scripts -- Google pide este
+          // script tal cual, literal dentro de <head>, para verificar el sitio.
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`}
+            crossOrigin="anonymous"
+          />
+        )}
+      </head>
       <body
         className={`${fredoka.variable} ${manrope.variable} bg-paper font-sans text-ink antialiased`}
       >
@@ -58,14 +68,6 @@ export default function RootLayout({
           <Footer />
         </ToastProvider>
       </body>
-      {adsenseClientId && (
-        <Script
-          async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`}
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
-      )}
     </html>
   );
 }
