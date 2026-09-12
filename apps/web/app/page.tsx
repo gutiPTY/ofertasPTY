@@ -21,6 +21,7 @@ interface OfertaFeed {
   precioOferta: string | null;
   porcentajeDescuento: number | null;
   precioOriginal: string | null;
+  fechaVencimiento: string;
   categoria: { nombre: string };
 }
 

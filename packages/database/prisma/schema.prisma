@@ -56,6 +56,7 @@ model Usuario {
   ofertasOcultadas Oferta[]             @relation("OfertasOcultadas")
   reportes         Reporte[]
   favoritos        Favorito[]
+  valoraciones     Valoracion[]
   moderaciones     Moderacion[]         @relation("Moderador")
   preferencias     PreferenciaUsuario[] // Épica 9: categorías/provincias favoritas para alertas
   comercio         Comercio?
@@ -162,6 +163,7 @@ model Oferta {
 
   reportes     Reporte[]
   favoritos    Favorito[]
+  valoraciones Valoracion[]
   moderaciones Moderacion[]
   ediciones    OfertaEdicion[]
 
@@ -210,6 +212,21 @@ model Reporte {
   creadoEn  DateTime @default(now())
 
   @@unique([ofertaId, usuarioId]) // un usuario solo puede reportar una vez la misma oferta
+}
+
+// Indicador público de calidad (Buena/Mala) en el detalle de la oferta.
+// Deliberadamente sin efecto en reputación ni en el flujo de moderación
+// (eso sigue siendo exclusivo de Reporte) — decisión explícita del usuario.
+model Valoracion {
+  id        String   @id @default(uuid())
+  oferta    Oferta   @relation(fields: [ofertaId], references: [id])
+  ofertaId  String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+  esBuena   Boolean
+  creadoEn  DateTime @default(now())
+
+  @@unique([ofertaId, usuarioId]) // un usuario tiene un solo voto por oferta, puede cambiarlo
 }
 
 model Favorito {

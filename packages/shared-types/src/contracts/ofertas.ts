@@ -55,6 +55,11 @@ export const CrearReporteInputSchema = z.object({
 });
 export type CrearReporteInput = z.infer<typeof CrearReporteInputSchema>;
 
+export const CrearValoracionInputSchema = z.object({
+  esBuena: z.boolean(),
+});
+export type CrearValoracionInput = z.infer<typeof CrearValoracionInputSchema>;
+
 export const FEED_PAGE_SIZE = 12;
 
 export const FiltrosFeedSchema = z.object({

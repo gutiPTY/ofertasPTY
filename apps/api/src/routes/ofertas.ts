@@ -163,6 +163,11 @@ export default async function ofertasRoutes(fastify: FastifyInstance) {
       return reply.code(404).send({ error: "oferta_no_encontrada" });
     }
 
-    return reply.send({ oferta });
+    const [valoracionesBuenas, valoracionesMalas] = await Promise.all([
+      prisma.valoracion.count({ where: { ofertaId: oferta.id, esBuena: true } }),
+      prisma.valoracion.count({ where: { ofertaId: oferta.id, esBuena: false } }),
+    ]);
+
+    return reply.send({ oferta: { ...oferta, valoracionesBuenas, valoracionesMalas } });
   });
 }
