@@ -11,7 +11,11 @@ import {
 } from "@ofertaspty/shared-types";
 import { prisma } from "@ofertaspty/database";
 import { supabaseAdmin } from "../lib/supabase-admin.js";
-import { COMERCIO_DOCS_BUCKET, COMERCIO_DOC_SIGNED_URL_SECONDS } from "../lib/constants.js";
+import {
+  COMERCIO_DOCS_BUCKET,
+  COMERCIO_DOC_SIGNED_URL_SECONDS,
+  USUARIO_INTERNET_ID,
+} from "../lib/constants.js";
 import { sendEmail } from "../lib/email.js";
 import {
   emailOfertaAprobada,
@@ -268,8 +272,10 @@ export default async function adminRoutes(fastify: FastifyInstance) {
         return oferta;
       });
 
-      const { subject, html } = emailOfertaAprobada(oferta);
-      await sendEmail({ to: oferta.creadoPor.email, subject, html });
+      if (oferta.creadoPorId !== USUARIO_INTERNET_ID) {
+        const { subject, html } = emailOfertaAprobada(oferta);
+        await sendEmail({ to: oferta.creadoPor.email, subject, html });
+      }
 
       return reply.send({ oferta });
     },
@@ -304,8 +310,10 @@ export default async function adminRoutes(fastify: FastifyInstance) {
         return oferta;
       });
 
-      const { subject, html } = emailOfertaRechazada(oferta, body.motivo);
-      await sendEmail({ to: oferta.creadoPor.email, subject, html });
+      if (oferta.creadoPorId !== USUARIO_INTERNET_ID) {
+        const { subject, html } = emailOfertaRechazada(oferta, body.motivo);
+        await sendEmail({ to: oferta.creadoPor.email, subject, html });
+      }
 
       return reply.send({ oferta });
     },
@@ -358,8 +366,10 @@ export default async function adminRoutes(fastify: FastifyInstance) {
         return actualizado;
       });
 
-      const { subject, html } = emailOfertaEditada(oferta, cambios);
-      await sendEmail({ to: oferta.creadoPor.email, subject, html });
+      if (oferta.creadoPorId !== USUARIO_INTERNET_ID) {
+        const { subject, html } = emailOfertaEditada(oferta, cambios);
+        await sendEmail({ to: oferta.creadoPor.email, subject, html });
+      }
 
       return reply.send({ oferta, cambios });
     },
