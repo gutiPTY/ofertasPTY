@@ -11,3 +11,9 @@ export const REPORTES_PARA_REVISION = 10;
 // URL pública, solo por URL firmada de corta duración.
 export const COMERCIO_DOCS_BUCKET = "comercio-docs";
 export const COMERCIO_DOC_SIGNED_URL_SECONDS = 5 * 60;
+
+// Usuario sintético usado por la skill buscar-ofertas-panama para cargar
+// ofertas curadas de internet (comercioId siempre null). No es una persona
+// real leyendo su bandeja de entrada, así que no tiene sentido mandarle
+// notificaciones de moderación.
+export const USUARIO_INTERNET_ID = "75e8be96-8a75-4386-80e3-5b7aacd798c7";
