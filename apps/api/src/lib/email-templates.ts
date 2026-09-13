@@ -1,15 +1,52 @@
 import { env } from "../env.js";
 
+// Paleta de marca (mismos tokens que apps/web/app/globals.css). Sin
+// imágenes externas ni @font-face: la mayoría de los clientes de correo
+// los bloquean o los ignoran, así que se usa una pila de fuentes de
+// sistema y color plano para que la marca se vea igual en todos.
+const COLOR_EMBER = "#d6401f";
+const COLOR_EMBER_INK = "#ffffff";
+const COLOR_INK = "#1b1512";
+const COLOR_MUTED = "#7a6f61";
+const COLOR_PAPER = "#fbf7f1";
+const COLOR_SURFACE = "#f3ebe0";
+const COLOR_LINE = "#e3d6c3";
+const FUENTE = "'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+
 function layout(titulo: string, cuerpoHtml: string) {
   return `
-    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #111;">
-      <h2 style="margin-bottom: 4px;">${titulo}</h2>
-      ${cuerpoHtml}
-      <p style="margin-top: 24px; font-size: 12px; color: #666;">
-        Encuentra Ofertas PTY
-      </p>
+    <div style="background: ${COLOR_SURFACE}; padding: 32px 16px; font-family: ${FUENTE};">
+      <div style="max-width: 480px; margin: 0 auto; background: ${COLOR_PAPER}; border-radius: 16px; overflow: hidden; border: 1px solid ${COLOR_LINE};">
+        <div style="background: ${COLOR_EMBER}; padding: 20px 24px;">
+          <span style="font-size: 20px; font-weight: 700; color: ${COLOR_EMBER_INK};">
+            🔥 Encuentra Ofertas PTY
+          </span>
+        </div>
+        <div style="padding: 28px 24px; color: ${COLOR_INK};">
+          <h2 style="margin: 0 0 12px; font-size: 20px; color: ${COLOR_INK};">${titulo}</h2>
+          <div style="font-size: 15px; line-height: 1.5;">${cuerpoHtml}</div>
+        </div>
+        <div style="padding: 16px 24px; border-top: 1px solid ${COLOR_LINE};">
+          <p style="margin: 0; font-size: 12px; color: ${COLOR_MUTED};">
+            Encuentra Ofertas PTY — Panamá ·
+            <a href="${env.WEB_URL}/contacto" style="color: ${COLOR_MUTED};">Contacto</a>
+          </p>
+        </div>
+      </div>
     </div>
   `;
+}
+
+function boton(href: string, texto: string) {
+  return `
+    <a href="${href}" style="display: inline-block; margin-top: 8px; padding: 10px 20px; background: ${COLOR_EMBER}; color: ${COLOR_EMBER_INK}; font-weight: 700; font-size: 14px; text-decoration: none; border-radius: 999px;">
+      ${texto}
+    </a>
+  `;
+}
+
+function enlace(href: string, texto: string) {
+  return `<a href="${href}" style="color: ${COLOR_EMBER}; font-weight: 600; text-decoration: none;">${texto}</a>`;
 }
 
 export function emailOfertaAprobada(oferta: { titulo: string; slug: string }) {
@@ -19,7 +56,7 @@ export function emailOfertaAprobada(oferta: { titulo: string; slug: string }) {
       "¡Tu oferta ya está publicada!",
       `
         <p>Un administrador revisó y aprobó tu oferta <strong>${oferta.titulo}</strong>. Ya está visible en el feed público.</p>
-        <p><a href="${env.WEB_URL}/ofertas/${oferta.slug}">Ver la oferta</a></p>
+        <p>${boton(`${env.WEB_URL}/ofertas/${oferta.slug}`, "Ver la oferta")}</p>
       `,
     ),
   };
@@ -34,6 +71,7 @@ export function emailOfertaRechazada(oferta: { titulo: string }, motivo?: string
         <p>Un administrador revisó tu oferta <strong>${oferta.titulo}</strong> y decidió no publicarla.</p>
         ${motivo ? `<p><strong>Motivo:</strong> ${motivo}</p>` : ""}
         <p>Podés corregirla y publicar una nueva si querés volver a intentarlo.</p>
+        <p>${boton(`${env.WEB_URL}/publicar`, "Publicar otra oferta")}</p>
       `,
     ),
   };
@@ -69,7 +107,7 @@ export function emailOfertaEditada(oferta: { titulo: string }, cambios: Record<s
       "Tu oferta fue editada por un administrador",
       `
         <p>Antes de decidir sobre tu oferta <strong>${oferta.titulo}</strong>, un administrador corrigió los siguientes datos:</p>
-        <ul>${filas}</ul>
+        <ul style="padding-left: 20px; margin: 0;">${filas}</ul>
       `,
     ),
   };
@@ -89,9 +127,9 @@ export function emailDigestPreferencias(ofertas: OfertaDigest[]) {
     .map(
       (oferta) => `
         <li style="margin-bottom: 12px;">
-          <a href="${env.WEB_URL}/ofertas/${oferta.slug}"><strong>${oferta.titulo}</strong></a>
+          ${enlace(`${env.WEB_URL}/ofertas/${oferta.slug}`, oferta.titulo)}
           <br />
-          <span style="font-size: 13px; color: #444;">
+          <span style="font-size: 13px; color: ${COLOR_MUTED};">
             ${oferta.categoria.nombre} · ${oferta.provincia}
             ${oferta.precioOferta ? ` · $${oferta.precioOferta}` : ""}
           </span>
@@ -106,8 +144,8 @@ export function emailDigestPreferencias(ofertas: OfertaDigest[]) {
       "Ofertas de la semana según tus preferencias",
       `
         <p>Estas son las ofertas publicadas esta semana en tus categorías o provincias favoritas:</p>
-        <ul style="padding-left: 20px;">${filas}</ul>
-        <p style="font-size: 12px; color: #888;">
+        <ul style="padding-left: 20px; margin: 0;">${filas}</ul>
+        <p style="font-size: 12px; color: ${COLOR_MUTED};">
           Podés cambiar tus categorías/provincias favoritas desde tu perfil en cualquier momento.
         </p>
       `,
@@ -143,10 +181,10 @@ export function emailComercioContactoAdmin(
           <strong>${escapeHtml(comercio.nombre)}</strong> (${escapeHtml(usuario.nombre)},
           ${escapeHtml(usuario.email)}) escribió:
         </p>
-        <p style="white-space: pre-line; border-left: 3px solid #eee; padding-left: 12px;">
+        <p style="white-space: pre-line; border-left: 3px solid ${COLOR_LINE}; padding-left: 12px;">
           ${mensajeHtml}
         </p>
-        <p style="font-size: 12px; color: #888;">Podés responder directo a este correo.</p>
+        <p style="font-size: 12px; color: ${COLOR_MUTED};">Podés responder directo a este correo.</p>
       `,
     ),
   };
@@ -180,9 +218,9 @@ export function emailNotificacionesFavoritos(items: FavoritoNotificable[]) {
     .map(
       (item) => `
         <li style="margin-bottom: 12px;">
-          <a href="${env.WEB_URL}/ofertas/${item.slug}"><strong>${item.titulo}</strong></a>
+          ${enlace(`${env.WEB_URL}/ofertas/${item.slug}`, item.titulo)}
           <br />
-          <span style="font-size: 13px; color: #444;">${item.motivo}</span>
+          <span style="font-size: 13px; color: ${COLOR_MUTED};">${item.motivo}</span>
         </li>
       `,
     )
@@ -193,9 +231,10 @@ export function emailNotificacionesFavoritos(items: FavoritoNotificable[]) {
     html: layout(
       "Novedades de tus ofertas favoritas",
       `
-        <ul style="padding-left: 20px;">${filas}</ul>
-        <p style="font-size: 12px; color: #888;">
-          Podés cambiar cuándo y cómo te avisamos de cada favorito desde /favoritos.
+        <ul style="padding-left: 20px; margin: 0;">${filas}</ul>
+        <p style="font-size: 12px; color: ${COLOR_MUTED};">
+          Podés cambiar cuándo y cómo te avisamos de cada favorito desde
+          ${enlace(`${env.WEB_URL}/favoritos`, "/favoritos")}.
         </p>
       `,
     ),
