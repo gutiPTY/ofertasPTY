@@ -21,6 +21,7 @@ const TABLAS = [
   "Moderacion",
   "OfertaEdicion",
   "Reporte",
+  "Valoracion",
   "Favorito",
   "Notificacion",
   "_prisma_migrations",
