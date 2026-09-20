@@ -1,7 +1,9 @@
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { prisma } from "@ofertaspty/database";
 
 const NOTIFICACIONES_LIMITE = 20;
+const paramsSchema = z.object({ id: z.string().uuid() });
 
 export default async function notificacionesRoutes(fastify: FastifyInstance) {
   // Épica 9 — centro de notificaciones interno (campana en el header). Solo
@@ -50,6 +52,49 @@ export default async function notificacionesRoutes(fastify: FastifyInstance) {
         data: { leida: true },
       });
 
+      return reply.send({ ok: true });
+    },
+  );
+
+  // Borra una notificación puntual — el usuario la descarta desde la
+  // campana (botón "x" por ítem).
+  fastify.delete(
+    "/notificaciones/:id",
+    { preHandler: fastify.authenticate },
+    async (request, reply) => {
+      const { id } = paramsSchema.parse(request.params);
+
+      const usuario = await prisma.usuario.findUnique({
+        where: { supabaseAuthId: request.user!.id },
+      });
+      if (!usuario) {
+        return reply.code(404).send({ error: "usuario_no_sincronizado" });
+      }
+
+      const notificacion = await prisma.notificacion.findUnique({ where: { id } });
+      if (!notificacion || notificacion.usuarioId !== usuario.id) {
+        return reply.code(404).send({ error: "notificacion_no_encontrada" });
+      }
+
+      await prisma.notificacion.delete({ where: { id } });
+      return reply.send({ ok: true });
+    },
+  );
+
+  // Borra todas las notificaciones del usuario — botón "Limpiar todo" del
+  // dropdown de la campana.
+  fastify.delete(
+    "/notificaciones/mine",
+    { preHandler: fastify.authenticate },
+    async (request, reply) => {
+      const usuario = await prisma.usuario.findUnique({
+        where: { supabaseAuthId: request.user!.id },
+      });
+      if (!usuario) {
+        return reply.code(404).send({ error: "usuario_no_sincronizado" });
+      }
+
+      await prisma.notificacion.deleteMany({ where: { usuarioId: usuario.id } });
       return reply.send({ ok: true });
     },
   );
