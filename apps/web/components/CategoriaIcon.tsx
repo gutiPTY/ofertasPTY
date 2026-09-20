@@ -67,14 +67,21 @@ const ICONS: Record<string, React.ReactNode> = {
   ),
 };
 
-const DEFAULT_COLOR = { bg: "#EEE3D4", fg: "#7A6F61" };
+// `fg` se usa como color del ícono (sobre `bg`, un chip claro) y también
+// como fondo del badge de categoría con texto blanco encima (OfertaCard).
+// Este mapa es independiente de los tokens de globals.css — Lighthouse
+// marcó blanco sobre #B9791A (Farmacias, 3.61:1) y el mismo problema
+// aplica a Entretenimiento (#F2762E, 2.84:1); se oscurecen ambos hasta
+// pasar 4.5:1. Bancos/Restaurantes/Otros se alinean al mismo ember/muted
+// oscurecido que globals.css para no tener dos tonos del mismo color.
+const DEFAULT_COLOR = { bg: "#EEE3D4", fg: "#6A5F52" };
 
 export const CATEGORIA_COLORS: Record<string, { bg: string; fg: string }> = {
-  Bancos: { bg: "#FBE4DC", fg: "#D6401F" },
-  Entretenimiento: { bg: "#FDEAD2", fg: "#F2762E" },
-  Farmacias: { bg: "#FCEFD2", fg: "#B9791A" },
-  Supermercados: { bg: "#EAF1E7", fg: "#3F7D53" },
-  Restaurantes: { bg: "#FBE4DC", fg: "#D6401F" },
+  Bancos: { bg: "#FBE4DC", fg: "#B3361A" },
+  Entretenimiento: { bg: "#FDEAD2", fg: "#C34F0C" },
+  Farmacias: { bg: "#FCEFD2", fg: "#9B6616" },
+  Supermercados: { bg: "#EAF1E7", fg: "#3C7850" },
+  Restaurantes: { bg: "#FBE4DC", fg: "#B3361A" },
   "Ropa y Moda": { bg: "#F3E7F2", fg: "#8A4F82" },
   Tecnología: { bg: "#E4ECF2", fg: "#3B6C93" },
   Otros: DEFAULT_COLOR,
