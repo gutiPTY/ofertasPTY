@@ -75,6 +75,31 @@ export default function NotificacionesBell() {
     }
   }
 
+  async function eliminarNotificacion(event: React.MouseEvent, id: string) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const token = await getToken();
+    if (!token) return;
+
+    setNotificaciones((actuales) => actuales?.filter((n) => n.id !== id) ?? actuales);
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notificaciones/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
+  async function limpiarTodas() {
+    const token = await getToken();
+    if (!token) return;
+
+    setNotificaciones([]);
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notificaciones/mine`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
   return (
     <div ref={contenedorRef} className="relative">
       <button
@@ -106,8 +131,17 @@ export default function NotificacionesBell() {
 
       {abierto && (
         <div className="absolute right-0 z-40 mt-2 w-80 max-w-[90vw] overflow-hidden rounded-2xl border border-line bg-surface shadow-lg">
-          <div className="border-b border-line px-4 py-3">
+          <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <span className="font-display text-sm font-semibold text-ink">Notificaciones</span>
+            {notificaciones !== null && notificaciones.length > 0 && (
+              <button
+                type="button"
+                onClick={limpiarTodas}
+                className="text-xs font-semibold text-muted transition hover:text-ink"
+              >
+                Limpiar todo
+              </button>
+            )}
           </div>
           <div className="max-h-96 overflow-y-auto">
             {notificaciones === null && (
@@ -118,7 +152,7 @@ export default function NotificacionesBell() {
             )}
             {notificaciones?.map((n) => {
               const contenido = (
-                <div className="flex items-start gap-2 px-4 py-3">
+                <div className="flex items-start gap-2 py-3 pl-4 pr-9">
                   {!n.leida && <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-ember" />}
                   <div className={`flex flex-1 flex-col gap-0.5 ${n.leida ? "pl-3.5" : ""}`}>
                     <span className="text-sm text-ink">{n.mensaje}</span>
@@ -133,17 +167,30 @@ export default function NotificacionesBell() {
                   </div>
                 </div>
               );
-              return n.ofertaSlug ? (
-                <Link
-                  key={n.id}
-                  href={`/ofertas/${n.ofertaSlug}`}
-                  className="block border-b border-line last:border-0 hover:bg-surface-2"
-                >
-                  {contenido}
-                </Link>
-              ) : (
-                <div key={n.id} className="border-b border-line last:border-0">
-                  {contenido}
+              return (
+                <div key={n.id} className="group relative border-b border-line last:border-0">
+                  {n.ofertaSlug ? (
+                    <Link href={`/ofertas/${n.ofertaSlug}`} className="block hover:bg-surface-2">
+                      {contenido}
+                    </Link>
+                  ) : (
+                    contenido
+                  )}
+                  <button
+                    type="button"
+                    onClick={(event) => eliminarNotificacion(event, n.id)}
+                    aria-label="Eliminar notificación"
+                    className="absolute right-2 top-2.5 flex h-6 w-6 items-center justify-center rounded-full text-muted opacity-0 transition hover:bg-surface-2 hover:text-ink group-hover:opacity-100"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                      <path
+                        d="M5 5l10 10M15 5L5 15"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
                 </div>
               );
             })}

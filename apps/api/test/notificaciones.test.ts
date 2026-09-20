@@ -69,4 +69,85 @@ describe("/notificaciones", () => {
     expect(body.noLeidas).toBe(0);
     expect(body.notificaciones.every((n: { leida: boolean }) => n.leida)).toBe(true);
   }, 15000);
+
+  it("DELETE /notificaciones/:id rechaza sin token", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "DELETE",
+      url: "/notificaciones/00000000-0000-0000-0000-000000000000",
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("DELETE /notificaciones/:id de otro usuario devuelve 404", async () => {
+    const otro = await createTestUser();
+    const app = buildApp();
+    await app.inject({
+      method: "POST",
+      url: "/auth/sync",
+      headers: { authorization: `Bearer ${otro.accessToken}` },
+      payload: { email: otro.email, nombre: "Otro Usuario" },
+    });
+
+    const propias = await app.inject({
+      method: "GET",
+      url: "/notificaciones/mine",
+      headers: { authorization: `Bearer ${usuario.accessToken}` },
+    });
+    const [notificacionAjena] = propias.json().notificaciones;
+
+    const res = await app.inject({
+      method: "DELETE",
+      url: `/notificaciones/${notificacionAjena.id}`,
+      headers: { authorization: `Bearer ${otro.accessToken}` },
+    });
+    expect(res.statusCode).toBe(404);
+
+    await otro.cleanup();
+  }, 20000);
+
+  it("DELETE /notificaciones/:id borra una notificación puntual", async () => {
+    const app = buildApp();
+    const antes = await app.inject({
+      method: "GET",
+      url: "/notificaciones/mine",
+      headers: { authorization: `Bearer ${usuario.accessToken}` },
+    });
+    const [primera] = antes.json().notificaciones;
+
+    const eliminar = await app.inject({
+      method: "DELETE",
+      url: `/notificaciones/${primera.id}`,
+      headers: { authorization: `Bearer ${usuario.accessToken}` },
+    });
+    expect(eliminar.statusCode).toBe(200);
+
+    const despues = await app.inject({
+      method: "GET",
+      url: "/notificaciones/mine",
+      headers: { authorization: `Bearer ${usuario.accessToken}` },
+    });
+    expect(
+      despues.json().notificaciones.some((n: { id: string }) => n.id === primera.id),
+    ).toBe(false);
+  }, 15000);
+
+  it("DELETE /notificaciones/mine borra todas las notificaciones del usuario", async () => {
+    const app = buildApp();
+    const eliminar = await app.inject({
+      method: "DELETE",
+      url: "/notificaciones/mine",
+      headers: { authorization: `Bearer ${usuario.accessToken}` },
+    });
+    expect(eliminar.statusCode).toBe(200);
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/notificaciones/mine",
+      headers: { authorization: `Bearer ${usuario.accessToken}` },
+    });
+    const body = res.json();
+    expect(body.notificaciones).toHaveLength(0);
+    expect(body.noLeidas).toBe(0);
+  }, 15000);
 });
