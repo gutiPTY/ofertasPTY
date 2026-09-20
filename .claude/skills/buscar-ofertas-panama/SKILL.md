@@ -75,8 +75,10 @@ por ejecución, repartidas entre 7 categorías. Evita duplicados.
   - Bucket público, límite 5MB por archivo, solo acepta `image/jpeg`,
     `image/png` o `image/webp`. Si la imagen descargada no cumple (otro
     formato o pesa más de 5MB), conviértela a jpeg/webp y/o comprime antes
-    de subir; si no se puede, inserta la oferta sin imagen y marca el caso
-    en el resumen final.
+    de subir; si no se puede lograr una imagen válida, descartá esa oferta
+    candidata (ver detalle y motivo en la sección 4, paso 5 — `imagenUrl` es
+    `NOT NULL`, no se puede insertar sin imagen) y marca el caso en el
+    resumen final.
   - Hay una política RLS que exige que el primer segmento del path sea el
     `auth.uid()` del usuario que sube. El skill usa la **service role key**,
     que bypasea esa política, pero por orden y trazabilidad igual sube todo
@@ -196,9 +198,18 @@ texto superpuesto del propio sitio.
    ```
 4. Usa como `imagenUrl` la URL pública resultante:
    `$SUPABASE_URL/storage/v1/object/public/ofertas/75e8be96-8a75-4386-80e3-5b7aacd798c7/<timestamp>-<slug>.jpg`.
-5. Si la descarga, conversión o subida falla, inserta la oferta igual pero
-   deja `imagenUrl` en null y márcalo en el resumen final para revisión
-   manual.
+5. **`Oferta.imagenUrl` es `String` obligatorio (`NOT NULL`) en el schema
+   (`packages/database/prisma/schema.prisma`) — verificado en vivo insertando
+   por PostgREST: falla con error `23502` (`null value in column "imagenUrl"
+   violates not-null constraint`).** Insertar con `imagenUrl = null` NO es
+   una opción real pese a lo que decía una versión anterior de este skill.
+   Si la descarga, conversión o subida de la imagen falla (incluye sitios
+   detrás de un challenge de Cloudflare tipo `challenges.cloudflare.com`,
+   que curl/WebFetch no pueden resolver sin navegador real), **descartá esa
+   oferta candidata por completo** — no la insertes, no inventes una URL de
+   imagen de relleno — y anotala en el resumen final como "descartada por
+   falta de imagen" para que el usuario decida si vale la pena conseguirla
+   manualmente después.
 
 ## 5. Insertar la oferta
 
