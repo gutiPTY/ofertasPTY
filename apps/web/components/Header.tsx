@@ -2,11 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import type { Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import Logo from "@/components/Logo";
 import LogoutButton from "@/components/LogoutButton";
-import NotificacionesBell from "@/components/NotificacionesBell";
+
+// Solo hace falta para usuarios con sesión — separarlo evita que su código
+// (y el fetch inicial a /notificaciones/mine) se descargue para el resto de
+// las visitas anónimas, que son la mayoría (Lighthouse: unused-javascript).
+const NotificacionesBell = dynamic(() => import("@/components/NotificacionesBell"), {
+  ssr: false,
+});
 
 interface SesionHeader {
   email: string;
