@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 type ToastType = "success" | "error";
@@ -35,6 +35,20 @@ function AlertIcon() {
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  // `typeof document !== "undefined"` en el render es exactamente el
+  // server/client branch que React marca como causa #1 de mismatch de
+  // hidratación (Lighthouse: errors-in-console, React #418): en SSR
+  // `document` no existe y no renderiza nada, en el cliente sí existe y
+  // renderiza el portal — servidor y cliente producen HTML distinto en el
+  // mismo pase. `mounted` en cambio arranca en `false` en los dos lados
+  // (SSR y primera hidratación coinciden), y solo después de montar en el
+  // cliente pasa a `true` y aparece el portal, ya fuera de la
+  // reconciliación de hidratación.
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const showToast = useCallback((message: string, type: ToastType = "success") => {
     const id = nextId++;
@@ -47,7 +61,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={showToast}>
       {children}
-      {typeof document !== "undefined" &&
+      {mounted &&
         createPortal(
           <div className="fixed inset-x-0 bottom-4 z-[100] flex flex-col items-center gap-2 px-4 sm:items-end sm:pr-6">
             {toasts.map((toast) => (
