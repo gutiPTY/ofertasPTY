@@ -41,7 +41,13 @@ export default function OfertaCard({
           src={imagenUrl}
           alt={titulo}
           fill
-          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+          // El ancho real de la tarjeta no es una fracción fija del viewport:
+          // a partir de md el layout tiene sidebar fijo (220px) y el
+          // contenedor topea en max-w-6xl (1152px), así que un "25vw" plano
+          // pedía imágenes ~2x más anchas de lo necesario en pantallas
+          // grandes (Lighthouse: image-delivery-insight, -100ms LCP).
+          sizes="(max-width: 639px) calc((100vw - 48px) / 2), (max-width: 767px) calc((100vw - 80px) / 3), (max-width: 1151px) calc((100vw - 332px) / 3), 273px"
+          quality={60}
           className="object-contain"
         />
         <span

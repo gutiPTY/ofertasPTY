@@ -22,9 +22,19 @@ function SlideCard({ slide, priority }: { slide: Slide; priority: boolean }) {
         src={slide.imagenUrl}
         alt={slide.titulo}
         fill
-        sizes="(max-width: 640px) 100vw, 33vw"
+        // max-w-6xl (1152px) topea el contenedor; un "33vw" plano pedía
+        // imágenes de hasta 633px en pantallas anchas cuando la tarjeta
+        // real nunca supera ~357px (Lighthouse: image-delivery-insight).
+        sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1151px) calc((100vw - 80px) / 3), 357px"
         className="object-cover object-top transition duration-300 group-hover:scale-105"
         priority={priority}
+        // Next 16 dejó de derivar fetchpriority="high" de `priority` — hay
+        // que pedirlo aparte (lcp-discovery-insight). No usar `loading=
+        // "eager"` acá: el bloque mobile y el desktop están ambos en el DOM
+        // (uno oculto por CSS según viewport), así que forzar eager
+        // cargaría las dos versiones; fetchPriority solo no tiene ese
+        // efecto.
+        fetchPriority={priority ? "high" : undefined}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
       <span className="relative mb-auto w-fit rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide text-ink">

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import HeroCarousel from "@/components/HeroCarousel";
 import RegisterStrip from "@/components/RegisterStrip";
 import CategoriasSection from "@/components/CategoriasSection";
@@ -53,15 +52,20 @@ export default async function Home({
   // aportan y compiten con los resultados.
   const esHomeLimpia = params.size === 0;
 
-  const supabase = await createClient();
-
-  const [feedRes, categoriasRes, destacadasRes, sessionResult] = await Promise.all([
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/ofertas?${params.toString()}`, { cache: "no-store" }),
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/categorias`, { cache: "no-store" }),
+  // Data Cache de Next.js (no full-route cache: esta página sigue siendo
+  // dinámica porque lee searchParams para los filtros). Igual reduce el
+  // golpe de latencia de la API en Railway para pedidos repetidos dentro
+  // de la ventana de revalidación, en vez de pegarle a Railway siempre.
+  const [feedRes, categoriasRes, destacadasRes] = await Promise.all([
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/ofertas?${params.toString()}`, {
+      next: { revalidate: 60 },
+    }),
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/categorias`, { next: { revalidate: 300 } }),
     esHomeLimpia
-      ? fetch(`${process.env.NEXT_PUBLIC_API_URL}/ofertas/destacadas`, { cache: "no-store" })
+      ? fetch(`${process.env.NEXT_PUBLIC_API_URL}/ofertas/destacadas`, {
+          next: { revalidate: 60 },
+        })
       : Promise.resolve(null),
-    supabase.auth.getSession(),
   ]);
 
   const { ofertas, total, page, pageSize } = (await feedRes.json()) as {
@@ -74,7 +78,6 @@ export default async function Home({
   const destacadas = destacadasRes
     ? ((await destacadasRes.json()) as { ofertas: OfertaFeed[] }).ofertas
     : [];
-  const haySesion = Boolean(sessionResult.data.session);
 
   // Épica 5/8: el carrusel muestra ofertas destacadas de comercios con
   // plan pago; si no hay ninguna, cae a las últimas ofertas agregadas
@@ -94,7 +97,7 @@ export default async function Home({
       {esHomeLimpia && (
         <>
           <HeroCarousel slides={slidesCarrusel} />
-          {!haySesion && <RegisterStrip />}
+          <RegisterStrip />
         </>
       )}
 

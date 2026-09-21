@@ -93,7 +93,7 @@ export default function SidebarFiltros({ categorias }: { categorias: Categoria[]
         </form>
 
         <div className="flex flex-col gap-2 border-b border-line pb-5">
-          <h4 className="text-xs font-bold uppercase tracking-wide text-muted">Provincia</h4>
+          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">Provincia</h3>
           <button
             type="button"
             onClick={() => updateParams({ provincia: undefined })}
@@ -114,7 +114,7 @@ export default function SidebarFiltros({ categorias }: { categorias: Categoria[]
         </div>
 
         <div className="flex flex-col gap-2 border-b border-line pb-5">
-          <h4 className="text-xs font-bold uppercase tracking-wide text-muted">Categoría</h4>
+          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">Categoría</h3>
           <button
             type="button"
             onClick={() => updateParams({ categoriaId: undefined })}
@@ -135,7 +135,7 @@ export default function SidebarFiltros({ categorias }: { categorias: Categoria[]
         </div>
 
         <div className="flex flex-col gap-2">
-          <h4 className="text-xs font-bold uppercase tracking-wide text-muted">Precio</h4>
+          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">Precio</h3>
           <div className="flex flex-wrap gap-2">
             {PRECIO_PRESETS.map((preset) => {
               const isActive =
