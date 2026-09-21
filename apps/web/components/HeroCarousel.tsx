@@ -22,7 +22,10 @@ function SlideCard({ slide, priority }: { slide: Slide; priority: boolean }) {
         src={slide.imagenUrl}
         alt={slide.titulo}
         fill
-        sizes="(max-width: 640px) 100vw, 33vw"
+        // max-w-6xl (1152px) topea el contenedor; un "33vw" plano pedía
+        // imágenes de hasta 633px en pantallas anchas cuando la tarjeta
+        // real nunca supera ~357px (Lighthouse: image-delivery-insight).
+        sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1151px) calc((100vw - 80px) / 3), 357px"
         className="object-cover object-top transition duration-300 group-hover:scale-105"
         priority={priority}
       />

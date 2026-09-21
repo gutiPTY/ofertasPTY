@@ -62,7 +62,10 @@ export default function MisOfertasListado({ ofertas }: { ofertas: OfertaDetalleD
                       src={oferta.imagenUrl}
                       alt={oferta.titulo}
                       fill
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      // max-w-4xl (896px) topea el contenedor; ver mismo
+                      // fix en OfertaCard.tsx (image-delivery-insight).
+                      sizes="(max-width: 639px) calc((100vw - 48px) / 2), (max-width: 895px) calc((100vw - 80px) / 3), 272px"
+                      quality={60}
                       className="object-cover object-top"
                     />
                     <span
