@@ -152,20 +152,31 @@ contra lo que ya está insertado en la base, no contra el resto del lote
 todavía pendiente. Procesando de a una, cada inserción queda visible de
 inmediato para el chequeo de la siguiente candidata.
 
-Como `comercioId` siempre es null, la deduplicación se hace por
-`linkExterno` y por `titulo` dentro de la misma categoría:
+Como `comercioId` siempre es null, la deduplicación se hace por `titulo`
+dentro de la misma categoría — **no** por `linkExterno` solo (ver por qué
+abajo):
 
 ```bash
-curl -s "$SUPABASE_URL/rest/v1/Oferta?select=id,estado,titulo&or=(linkExterno.eq.$LINK_EXTERNO,and(categoriaId.eq.$CATEGORIA_ID,titulo.ilike.$TITULO_NORMALIZADO))" \
+curl -s "$SUPABASE_URL/rest/v1/Oferta?select=id,estado,titulo,linkExterno&categoriaId=eq.$CATEGORIA_ID&titulo=ilike.$TITULO_NORMALIZADO" \
   -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
   -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
 ```
 
-- Si ya existe una fila con el mismo `linkExterno`, es duplicado: sáltala,
-  sin importar el estado.
 - Si ya existe una fila con el mismo `titulo` (normalizado, sin
   tildes/mayúsculas) dentro de la misma `categoriaId` y `estado` distinto de
-  `RECHAZADA`/`EXPIRADA`, también es duplicado: sáltala.
+  `RECHAZADA`/`EXPIRADA`, es duplicado: sáltala.
+- **`linkExterno` NO es señal de duplicado por sí solo.** Un mismo comercio
+  publica seguido varias ofertas *distintas* bajo la misma URL: una página
+  "hub" de promociones de un banco/super (ej. Banesco, Super 99, Banco
+  General) o una landing con varios beneficios listados (verificado en vivo:
+  `super99.com/programa-99` sola ya tenía 7 descuentos reales y distintos —
+  mascotas, dermocosmética, jugueteria, dulces, frutas/vegetales, cosméticos,
+  medicamentos — cada uno con su propio día/departamento). Si se descarta
+  toda oferta nueva solo porque el `linkExterno` ya aparece en la base, se
+  pierden ofertas reales que sí hay que cargar. El único uso válido de
+  `linkExterno` en la deduplicación es como señal *adicional* cuando el
+  `titulo` ya matcheó (confirma que es la misma oferta re-scrapeada, no solo
+  un título parecido) — nunca como criterio único para saltar una candidata.
 - Lleva un contador de duplicados detectados para el resumen final.
 
 ## 4. Descargar y subir la imagen al bucket `ofertas`
@@ -182,7 +193,23 @@ las imágenes de promos). Si aun así no aparece una URL de imagen limpia,
 alternativa que funciona: capturar un screenshot (`page.screenshot` con
 `clip`) de la zona exacta de la promo en la página ya renderizada, y usar
 ese recorte como imagen — es una imagen real del comercio, aunque incluya
-texto superpuesto del propio sitio.
+texto superpuesto del propio sitio. Ojo: si el fondo de esa zona es oscuro
+y el texto también, el recorte puede salir ilegible (gris sobre gris) —
+revisá el resultado antes de subirlo, no asumas que un screenshot "que se
+generó sin error" es automáticamente usable.
+
+**Cloudflare bloquea el fetch plano de la imagen aunque la página HTML cargó
+bien (verificado en vivo con `media.banesco.com.pa`):** un `curl`/`fetch()`
+directo a la URL de la imagen devuelve `403` con `content-type: text/html`
+(la página de challenge de Cloudflare), incluso cuando `page.goto()` a la
+página que la muestra funcionó sin problema — el challenge se aplica por
+*asset*, no por sesión de navegación. Lo que sí funciona: en vez de pedir la
+imagen con `fetch()`/`ctx.request.get()`, navegar el browser **directo a la
+URL de la imagen** con `page.goto(urlImagen)` — ahí el challenge se resuelve
+como en cualquier navegación real, y `response.body()` de esa navegación
+trae los bytes reales. Patrón recomendado: intentar primero `fetch()` (más
+rápido) y, si da `403` o el `content-type` no es `image/*`, reintentar con
+`page.goto()` a esa misma URL antes de descartar la candidata.
 
 1. Descarga la imagen de la promoción desde la fuente original.
 2. Valida que sea `image/jpeg`, `image/png` o `image/webp` y que pese ≤ 5MB;
