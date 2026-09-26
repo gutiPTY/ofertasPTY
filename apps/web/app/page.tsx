@@ -47,10 +47,16 @@ export default async function Home({
   if (searchParams.precioMax) params.set("precioMax", searchParams.precioMax);
   if (searchParams.page) params.set("page", searchParams.page);
 
-  // El carrusel y la sección de categorías solo aparecen en la home
-  // "limpia" (sin filtros ni paginación) — en una vista filtrada no
-  // aportan y compiten con los resultados.
-  const esHomeLimpia = params.size === 0;
+  // El carrusel solo se oculta cuando hay filtros activos (categoría,
+  // búsqueda, precio, provincia) — en esa vista compite con los resultados
+  // filtrados. La paginación no cuenta como filtro: debe prevalecer en
+  // cualquier página del feed principal.
+  const sinFiltros =
+    !searchParams.categoriaId &&
+    !searchParams.provincia &&
+    !searchParams.q &&
+    !searchParams.precioMin &&
+    !searchParams.precioMax;
 
   // Data Cache de Next.js (no full-route cache: esta página sigue siendo
   // dinámica porque lee searchParams para los filtros). Igual reduce el
@@ -61,7 +67,7 @@ export default async function Home({
       next: { revalidate: 60 },
     }),
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/categorias`, { next: { revalidate: 300 } }),
-    esHomeLimpia
+    sinFiltros
       ? fetch(`${process.env.NEXT_PUBLIC_API_URL}/ofertas/destacadas`, {
           next: { revalidate: 60 },
         })
@@ -98,7 +104,7 @@ export default async function Home({
 
   return (
     <main className="flex flex-col pb-16">
-      {esHomeLimpia && (
+      {sinFiltros && (
         <>
           <HeroCarousel slides={slidesCarrusel} />
           <RegisterStrip />
