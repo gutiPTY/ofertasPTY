@@ -10,9 +10,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useOptionalSession } from "../context/SessionContext";
 import type { RootStackParamList } from "../types/navigation";
+import AdBanner from "../components/AdBanner";
+import { AD_UNIT_DETALLE_BANNER } from "../lib/ads";
+import { Button, CategoryPill, PriceTag } from "../components/ui";
+import { colors, radii, spacing, textStyles } from "../theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Detalle">;
 
@@ -79,7 +84,7 @@ export default function DetalleOfertaScreen({ route, navigation }: Props) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.ember} />
       </View>
     );
   }
@@ -87,7 +92,7 @@ export default function DetalleOfertaScreen({ route, navigation }: Props) {
   if (!oferta) {
     return (
       <View style={styles.center}>
-        <Text>No se encontró la oferta.</Text>
+        <Text style={textStyles.body}>No se encontró la oferta.</Text>
       </View>
     );
   }
@@ -97,21 +102,19 @@ export default function DetalleOfertaScreen({ route, navigation }: Props) {
       <Image source={{ uri: oferta.imagenUrl }} style={styles.imagen} />
 
       <View style={styles.headerRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.categoria}>{oferta.categoria.nombre}</Text>
+        <View style={{ flex: 1, gap: spacing.xs }}>
+          <CategoryPill nombre={oferta.categoria.nombre} />
           <Text style={styles.titulo}>{oferta.titulo}</Text>
         </View>
-        <TouchableOpacity style={styles.favButton} onPress={toggleFavorito}>
-          <Text>{favorito ? "★ Guardado" : "☆ Guardar"}</Text>
-        </TouchableOpacity>
+        <Button
+          variant="secondary"
+          label={favorito ? "Guardado" : "Guardar"}
+          icon={favorito ? "heart" : "heart-outline"}
+          onPress={toggleFavorito}
+        />
       </View>
 
-      {oferta.precioOferta && (
-        <Text style={styles.precio}>
-          ${oferta.precioOferta}
-          {oferta.precioOriginal && <Text style={styles.precioOriginal}> ${oferta.precioOriginal}</Text>}
-        </Text>
-      )}
+      <PriceTag precioOferta={oferta.precioOferta} precioOriginal={oferta.precioOriginal} />
 
       <Text style={styles.descripcion}>{oferta.descripcion}</Text>
 
@@ -124,25 +127,25 @@ export default function DetalleOfertaScreen({ route, navigation }: Props) {
         Vence el {new Date(oferta.fechaVencimiento).toLocaleDateString("es-PA")}
       </Text>
       {oferta.linkExterno && (
-        <TouchableOpacity onPress={() => Linking.openURL(oferta.linkExterno!)}>
+        <TouchableOpacity style={styles.linkRow} onPress={() => Linking.openURL(oferta.linkExterno!)}>
           <Text style={styles.link}>Ver más</Text>
+          <Ionicons name="open-outline" size={14} color={colors.ember} />
         </TouchableOpacity>
       )}
+
+      <AdBanner unitId={AD_UNIT_DETALLE_BANNER} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  container: { padding: 16, gap: 8 },
-  imagen: { width: "100%", height: 200, borderRadius: 8 },
-  headerRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
-  categoria: { fontSize: 12, color: "#666" },
-  titulo: { fontSize: 20, fontWeight: "700" },
-  favButton: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
-  precio: { fontSize: 18, fontWeight: "700" },
-  precioOriginal: { fontSize: 14, color: "#999", textDecorationLine: "line-through" },
-  descripcion: { fontSize: 14, color: "#333" },
-  meta: { fontSize: 12, color: "#666" },
-  link: { fontSize: 13, color: "#00f", textDecorationLine: "underline" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.paper },
+  container: { padding: spacing.lg, gap: spacing.sm, backgroundColor: colors.paper },
+  imagen: { width: "100%", height: 200, borderRadius: radii.card, backgroundColor: colors.surface2 },
+  headerRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm },
+  titulo: { ...textStyles.sectionHeading, fontSize: 20, color: colors.ink },
+  descripcion: { ...textStyles.body, color: colors.ink },
+  meta: { ...textStyles.bodyMuted, color: colors.muted },
+  linkRow: { flexDirection: "row", alignItems: "center", gap: spacing.xs },
+  link: { ...textStyles.body, color: colors.ember },
 });

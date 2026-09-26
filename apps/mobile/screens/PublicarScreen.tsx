@@ -1,21 +1,14 @@
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { CrearOfertaInputSchema, PROVINCIAS_PANAMA } from "@ofertaspty/shared-types";
 import { supabase } from "../lib/supabase";
 import { useOptionalSession } from "../context/SessionContext";
 import type { RootStackParamList } from "../types/navigation";
+import { Button, Chip, ScreenContainer } from "../components/ui";
+import { colors, radii, spacing, textStyles } from "../theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Publicar">;
 
@@ -134,19 +127,29 @@ export default function PublicarScreen({ navigation }: Props) {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScreenContainer scroll contentStyle={styles.content}>
       <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
         {imagen ? (
           <Image source={{ uri: imagen.uri }} style={styles.imagePreview} />
         ) : (
-          <Text>Elegir foto</Text>
+          <View style={styles.imagePickerEmpty}>
+            <Ionicons name="camera-outline" size={28} color={colors.muted} />
+            <Text style={styles.imagePickerLabel}>Elegir foto</Text>
+          </View>
         )}
       </TouchableOpacity>
 
-      <TextInput style={styles.input} placeholder="Título" value={titulo} onChangeText={setTitulo} />
+      <TextInput
+        style={styles.input}
+        placeholder="Título"
+        placeholderTextColor={colors.muted}
+        value={titulo}
+        onChangeText={setTitulo}
+      />
       <TextInput
         style={[styles.input, styles.textarea]}
         placeholder="Descripción"
+        placeholderTextColor={colors.muted}
         value={descripcion}
         onChangeText={setDescripcion}
         multiline
@@ -155,6 +158,7 @@ export default function PublicarScreen({ navigation }: Props) {
         <TextInput
           style={[styles.input, styles.flex1]}
           placeholder="Precio original (opcional)"
+          placeholderTextColor={colors.muted}
           value={precioOriginal}
           onChangeText={setPrecioOriginal}
           keyboardType="decimal-pad"
@@ -162,6 +166,7 @@ export default function PublicarScreen({ navigation }: Props) {
         <TextInput
           style={[styles.input, styles.flex1]}
           placeholder="Precio oferta (opcional)"
+          placeholderTextColor={colors.muted}
           value={precioOferta}
           onChangeText={setPrecioOferta}
           keyboardType="decimal-pad"
@@ -171,71 +176,70 @@ export default function PublicarScreen({ navigation }: Props) {
       <Text style={styles.label}>Provincia</Text>
       <View style={styles.chips}>
         {PROVINCIAS_PANAMA.map((p) => (
-          <TouchableOpacity
-            key={p}
-            style={[styles.chip, provincia === p && styles.chipSelected]}
-            onPress={() => setProvincia(p)}
-          >
-            <Text style={provincia === p ? styles.chipTextSelected : styles.chipText}>{p}</Text>
-          </TouchableOpacity>
+          <Chip key={p} label={p} selected={provincia === p} onPress={() => setProvincia(p)} />
         ))}
       </View>
 
       <Text style={styles.label}>Categoría</Text>
       <View style={styles.chips}>
         {categorias.map((c) => (
-          <TouchableOpacity
+          <Chip
             key={c.id}
-            style={[styles.chip, categoriaId === c.id && styles.chipSelected]}
+            label={c.nombre}
+            selected={categoriaId === c.id}
             onPress={() => setCategoriaId(c.id)}
-          >
-            <Text style={categoriaId === c.id ? styles.chipTextSelected : styles.chipText}>{c.nombre}</Text>
-          </TouchableOpacity>
+          />
         ))}
       </View>
 
       <TextInput
         style={styles.input}
         placeholder="Vigencia desde (AAAA-MM-DD)"
+        placeholderTextColor={colors.muted}
         value={fechaInicio}
         onChangeText={setFechaInicio}
       />
       <TextInput
         style={styles.input}
         placeholder="Vigencia hasta (AAAA-MM-DD)"
+        placeholderTextColor={colors.muted}
         value={fechaVencimiento}
         onChangeText={setFechaVencimiento}
       />
 
-      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Publicar</Text>}
-      </TouchableOpacity>
-    </ScrollView>
+      <Button label="Publicar" onPress={handleSubmit} loading={loading} style={styles.submitButton} />
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, gap: 10 },
+  content: { padding: spacing.xl, gap: spacing.sm },
   imagePicker: {
     height: 160,
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
+    borderColor: colors.line,
+    borderRadius: radii.card,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
   },
+  imagePickerEmpty: { alignItems: "center", gap: spacing.xs },
+  imagePickerLabel: { ...textStyles.bodyMuted, color: colors.muted },
   imagePreview: { width: "100%", height: "100%" },
-  input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 12 },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radii.sm,
+    padding: spacing.md,
+    fontFamily: textStyles.body.fontFamily,
+    fontSize: 14,
+    color: colors.ink,
+  },
   textarea: { minHeight: 80, textAlignVertical: "top" },
-  row: { flexDirection: "row", gap: 10 },
+  row: { flexDirection: "row", gap: spacing.sm },
   flex1: { flex: 1 },
-  label: { fontWeight: "600", marginTop: 6 },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: { borderWidth: 1, borderColor: "#ccc", borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6 },
-  chipSelected: { backgroundColor: "#000", borderColor: "#000" },
-  chipText: { fontSize: 13 },
-  chipTextSelected: { fontSize: 13, color: "#fff" },
-  submitButton: { backgroundColor: "#000", borderRadius: 8, padding: 14, alignItems: "center", marginTop: 12 },
-  submitButtonText: { color: "#fff", fontWeight: "600" },
+  label: { ...textStyles.microLabel, color: colors.muted, marginTop: spacing.xs },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs },
+  submitButton: { marginTop: spacing.sm },
 });

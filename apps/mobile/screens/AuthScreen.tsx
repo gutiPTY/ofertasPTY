@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import * as Linking from "expo-linking";
@@ -7,6 +7,8 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LoginInputSchema, RegisterInputSchema } from "@ofertaspty/shared-types";
 import { supabase } from "../lib/supabase";
 import type { RootStackParamList } from "../types/navigation";
+import { Button, ScreenContainer } from "../components/ui";
+import { colors, radii, spacing, textStyles } from "../theme";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -113,13 +115,14 @@ export default function AuthScreen({ navigation }: Props) {
   }
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer contentStyle={styles.content}>
       <Text style={styles.title}>Encuentra Ofertas PTY</Text>
 
       {mode === "registro" && (
         <TextInput
           style={styles.input}
           placeholder="Nombre"
+          placeholderTextColor={colors.muted}
           value={nombre}
           onChangeText={setNombre}
           autoCapitalize="words"
@@ -128,6 +131,7 @@ export default function AuthScreen({ navigation }: Props) {
       <TextInput
         style={styles.input}
         placeholder="Email"
+        placeholderTextColor={colors.muted}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -136,39 +140,46 @@ export default function AuthScreen({ navigation }: Props) {
       <TextInput
         style={styles.input}
         placeholder="Contraseña"
+        placeholderTextColor={colors.muted}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>{mode === "login" ? "Ingresar" : "Crear cuenta"}</Text>
-        )}
-      </TouchableOpacity>
+      <Button
+        label={mode === "login" ? "Ingresar" : "Crear cuenta"}
+        onPress={handleSubmit}
+        loading={loading}
+      />
 
-      <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn} disabled={loading}>
-        <Text style={styles.googleButtonText}>Continuar con Google</Text>
-      </TouchableOpacity>
+      <Button
+        label="Continuar con Google"
+        variant="secondary"
+        icon="logo-google"
+        onPress={handleGoogleSignIn}
+        disabled={loading}
+      />
 
       <TouchableOpacity onPress={() => setMode(mode === "login" ? "registro" : "login")}>
         <Text style={styles.link}>
           {mode === "login" ? "¿No tenés cuenta? Registrate" : "¿Ya tenés cuenta? Ingresá"}
         </Text>
       </TouchableOpacity>
-    </View>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 24, gap: 12 },
-  title: { fontSize: 22, fontWeight: "600", textAlign: "center", marginBottom: 16 },
-  input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 12 },
-  button: { backgroundColor: "#000", borderRadius: 8, padding: 14, alignItems: "center" },
-  buttonText: { color: "#fff", fontWeight: "600" },
-  googleButton: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 14, alignItems: "center" },
-  googleButtonText: { fontWeight: "600" },
-  link: { textAlign: "center", marginTop: 12, color: "#333" },
+  content: { flexGrow: 1, justifyContent: "center", padding: spacing.xl, gap: spacing.md },
+  title: { ...textStyles.sectionHeading, color: colors.ink, textAlign: "center", marginBottom: spacing.md },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radii.sm,
+    padding: spacing.md,
+    fontFamily: textStyles.body.fontFamily,
+    fontSize: 14,
+    color: colors.ink,
+  },
+  link: { ...textStyles.body, color: colors.ember, textAlign: "center", marginTop: spacing.sm },
 });

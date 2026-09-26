@@ -1,18 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TextInput, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { PROVINCIAS_PANAMA } from "@ofertaspty/shared-types";
 import type { RootStackParamList } from "../types/navigation";
+import AdBanner from "../components/AdBanner";
+import { AD_UNIT_FEED_BANNER } from "../lib/ads";
+import { Button, Card, Chip, CategoryPill, PriceTag } from "../components/ui";
+import { colors, fontFamily, radii, spacing, textStyles } from "../theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Feed">;
 
@@ -69,102 +65,110 @@ export default function FeedScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.cuentaButton} onPress={() => navigation.navigate("Cuenta")}>
-          <Text style={styles.cuentaButtonText}>Cuenta</Text>
-        </TouchableOpacity>
+        <Button
+          label="Cuenta"
+          variant="secondary"
+          icon="person-circle-outline"
+          onPress={() => navigation.navigate("Cuenta")}
+        />
       </View>
 
-      <TextInput
-        style={styles.search}
-        placeholder="Buscar ofertas..."
-        value={q}
-        onChangeText={setQ}
-        onSubmitEditing={fetchFeed}
-        returnKeyType="search"
-      />
+      <View style={styles.search}>
+        <Ionicons name="search" size={16} color={colors.muted} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar ofertas..."
+          placeholderTextColor={colors.muted}
+          value={q}
+          onChangeText={setQ}
+          onSubmitEditing={fetchFeed}
+          returnKeyType="search"
+        />
+      </View>
 
       <View style={styles.chips}>
-        <TouchableOpacity
-          style={[styles.chip, !provincia && styles.chipSelected]}
-          onPress={() => setProvincia(null)}
-        >
-          <Text style={!provincia ? styles.chipTextSelected : styles.chipText}>Todas las provincias</Text>
-        </TouchableOpacity>
+        <Chip label="Todas las provincias" selected={!provincia} onPress={() => setProvincia(null)} />
         {PROVINCIAS_PANAMA.map((p) => (
-          <TouchableOpacity
+          <Chip
             key={p}
-            style={[styles.chip, provincia === p && styles.chipSelected]}
+            label={p}
+            selected={provincia === p}
             onPress={() => setProvincia(provincia === p ? null : p)}
-          >
-            <Text style={provincia === p ? styles.chipTextSelected : styles.chipText}>{p}</Text>
-          </TouchableOpacity>
+          />
         ))}
       </View>
       <View style={styles.chips}>
-        <TouchableOpacity
-          style={[styles.chip, !categoriaId && styles.chipSelected]}
-          onPress={() => setCategoriaId(null)}
-        >
-          <Text style={!categoriaId ? styles.chipTextSelected : styles.chipText}>Todas las categorías</Text>
-        </TouchableOpacity>
+        <Chip label="Todas las categorías" selected={!categoriaId} onPress={() => setCategoriaId(null)} />
         {categorias.map((c) => (
-          <TouchableOpacity
+          <Chip
             key={c.id}
-            style={[styles.chip, categoriaId === c.id && styles.chipSelected]}
+            label={c.nombre}
+            selected={categoriaId === c.id}
             onPress={() => setCategoriaId(categoriaId === c.id ? null : c.id)}
-          >
-            <Text style={categoriaId === c.id ? styles.chipTextSelected : styles.chipText}>{c.nombre}</Text>
-          </TouchableOpacity>
+          />
         ))}
       </View>
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 24 }} />
+        <ActivityIndicator style={{ marginTop: spacing.xxl }} color={colors.ember} />
       ) : (
         <FlatList
           contentContainerStyle={styles.list}
           data={ofertas}
           keyExtractor={(item) => item.id}
           numColumns={2}
-          columnWrapperStyle={{ gap: 10 }}
+          columnWrapperStyle={{ gap: spacing.sm }}
           ListEmptyComponent={<Text style={styles.empty}>No hay ofertas que coincidan.</Text>}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => navigation.navigate("Detalle", { slug: item.slug })}
-            >
-              <Image source={{ uri: item.imagenUrl }} style={styles.cardImage} />
-              <Text style={styles.cardCategoria}>
-                {item.categoria.nombre} · {item.provincia}
-              </Text>
-              <Text style={styles.cardTitulo} numberOfLines={2}>
-                {item.titulo}
-              </Text>
-              {item.precioOferta && <Text style={styles.cardPrecio}>${item.precioOferta}</Text>}
-            </TouchableOpacity>
+            <Card style={styles.card} onPress={() => navigation.navigate("Detalle", { slug: item.slug })}>
+              <View>
+                <Image source={{ uri: item.imagenUrl }} style={styles.cardImage} />
+                <CategoryPill nombre={item.categoria.nombre} style={styles.categoryBadge} />
+              </View>
+              <View style={styles.cardBody}>
+                <Text style={styles.cardProvincia}>{item.provincia}</Text>
+                <Text style={styles.cardTitulo} numberOfLines={2}>
+                  {item.titulo}
+                </Text>
+                <PriceTag precioOferta={item.precioOferta} precioOriginal={item.precioOriginal} size="sm" />
+              </View>
+            </Card>
           )}
         />
       )}
+
+      <AdBanner unitId={AD_UNIT_FEED_BANNER} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 12, gap: 8 },
+  container: { flex: 1, backgroundColor: colors.paper, padding: spacing.md, gap: spacing.sm },
   headerRow: { flexDirection: "row", justifyContent: "flex-end" },
-  cuentaButton: { borderWidth: 1, borderColor: "#ccc", borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6 },
-  cuentaButtonText: { fontSize: 13, fontWeight: "600" },
-  search: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 10 },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  chip: { borderWidth: 1, borderColor: "#ccc", borderRadius: 16, paddingHorizontal: 10, paddingVertical: 5 },
-  chipSelected: { backgroundColor: "#000", borderColor: "#000" },
-  chipText: { fontSize: 12 },
-  chipTextSelected: { fontSize: 12, color: "#fff" },
-  list: { gap: 10, paddingTop: 8, paddingBottom: 24 },
-  empty: { textAlign: "center", color: "#666", marginTop: 24 },
-  card: { flex: 1, borderWidth: 1, borderColor: "#eee", borderRadius: 8, overflow: "hidden", marginBottom: 10 },
-  cardImage: { width: "100%", height: 100 },
-  cardCategoria: { fontSize: 11, color: "#666", paddingHorizontal: 8, paddingTop: 4 },
-  cardTitulo: { fontSize: 13, fontWeight: "600", paddingHorizontal: 8, paddingTop: 2 },
-  cardPrecio: { fontSize: 13, fontWeight: "700", paddingHorizontal: 8, paddingBottom: 8, paddingTop: 2 },
+  search: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: fontFamily.sansRegular,
+    fontSize: 14,
+    color: colors.ink,
+  },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs },
+  list: { gap: spacing.sm, paddingTop: spacing.xs, paddingBottom: spacing.xxl },
+  empty: { ...textStyles.bodyMuted, color: colors.muted, textAlign: "center", marginTop: spacing.xxl },
+  card: { flex: 1, marginBottom: spacing.sm },
+  cardImage: { width: "100%", height: 100, backgroundColor: colors.surface2 },
+  categoryBadge: { position: "absolute", left: spacing.xs, top: spacing.xs },
+  cardBody: { padding: spacing.sm, gap: 2 },
+  cardProvincia: { ...textStyles.bodyMuted, color: colors.muted, fontSize: 11 },
+  cardTitulo: { ...textStyles.cardTitle, color: colors.ink },
 });

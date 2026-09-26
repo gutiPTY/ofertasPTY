@@ -4,6 +4,8 @@ import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-nativ
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useOptionalSession } from "../context/SessionContext";
 import type { RootStackParamList } from "../types/navigation";
+import { Badge, Card } from "../components/ui";
+import { colors, spacing, textStyles } from "../theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "MisOfertas">;
 
@@ -21,6 +23,14 @@ const ESTADO_LABEL: Record<OfertaConModeracion["estado"], string> = {
   RECHAZADA: "Rechazada",
   EXPIRADA: "Expirada",
   EN_REVISION: "En revisión",
+};
+
+const ESTADO_TONE: Record<OfertaConModeracion["estado"], "success" | "warning" | "critical" | "muted"> = {
+  PENDIENTE: "warning",
+  PUBLICADA: "success",
+  RECHAZADA: "critical",
+  EXPIRADA: "muted",
+  EN_REVISION: "muted",
 };
 
 export default function MisOfertasScreen({ navigation }: Props) {
@@ -56,41 +66,42 @@ export default function MisOfertasScreen({ navigation }: Props) {
   if (!session || loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.ember} />
       </View>
     );
   }
 
   return (
     <FlatList
+      style={styles.background}
       contentContainerStyle={styles.list}
       data={ofertas}
       keyExtractor={(item) => item.id}
       ListEmptyComponent={<Text style={styles.empty}>Todavía no publicaste ninguna oferta.</Text>}
       renderItem={({ item }) => (
-        <View style={styles.card}>
+        <Card style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.titulo}>{item.titulo}</Text>
-            <Text style={styles.badge}>{ESTADO_LABEL[item.estado]}</Text>
+            <Badge label={ESTADO_LABEL[item.estado]} tone={ESTADO_TONE[item.estado]} />
           </View>
           <Text style={styles.categoria}>{item.categoria.nombre}</Text>
           {item.estado === "RECHAZADA" && item.moderaciones[0]?.motivo && (
             <Text style={styles.motivo}>Motivo: {item.moderaciones[0].motivo}</Text>
           )}
-        </View>
+        </Card>
       )}
     />
   );
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  list: { padding: 16, gap: 10 },
-  empty: { textAlign: "center", color: "#666", marginTop: 24 },
-  card: { borderWidth: 1, borderColor: "#eee", borderRadius: 8, padding: 12, marginBottom: 10 },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  titulo: { fontWeight: "600", flexShrink: 1 },
-  badge: { fontSize: 12, backgroundColor: "#f2f2f2", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
-  categoria: { fontSize: 13, color: "#666", marginTop: 2 },
-  motivo: { fontSize: 13, color: "#c00", marginTop: 4 },
+  background: { backgroundColor: colors.paper },
+  center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.paper },
+  list: { padding: spacing.lg, gap: spacing.sm },
+  empty: { ...textStyles.bodyMuted, color: colors.muted, textAlign: "center", marginTop: spacing.xxl },
+  card: { padding: spacing.md },
+  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: spacing.sm },
+  titulo: { ...textStyles.cardTitle, color: colors.ink, flexShrink: 1 },
+  categoria: { ...textStyles.bodyMuted, color: colors.muted, marginTop: 2 },
+  motivo: { ...textStyles.bodyMuted, color: colors.critical, marginTop: spacing.xs },
 });
