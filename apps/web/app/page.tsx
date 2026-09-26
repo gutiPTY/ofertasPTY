@@ -88,7 +88,11 @@ export default async function Home({
 
   function pageHref(nextPage: number) {
     const p = new URLSearchParams(params);
-    p.set("page", String(nextPage));
+    if (nextPage > 1) {
+      p.set("page", String(nextPage));
+    } else {
+      p.delete("page");
+    }
     return `/?${p.toString()}`;
   }
 
