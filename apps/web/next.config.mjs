@@ -13,11 +13,11 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
 // cuenta real). Ver next.config.mjs de esta app para el detalle de orígenes.
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.googletagservices.com https://www.google.com https://www.gstatic.com https://*.adtrafficquality.google",
+  "script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.googletagservices.com https://www.google.com https://www.gstatic.com https://*.adtrafficquality.google https://static.cloudflareinsights.com",
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${supabaseUrl} https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com https://www.gstatic.com https://tpc.googlesyndication.com https://*.adtrafficquality.google`,
   "font-src 'self' data:",
-  `connect-src 'self' ${supabaseUrl} ${apiUrl} https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google`,
+  `connect-src 'self' ${supabaseUrl} ${apiUrl} https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google https://cloudflareinsights.com`,
   "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://pagead2.googlesyndication.com https://*.adtrafficquality.google",
   "frame-ancestors 'none'",
   "base-uri 'self'",
