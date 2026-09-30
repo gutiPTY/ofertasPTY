@@ -1,15 +1,34 @@
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import type { DiaSemana } from "@ofertaspty/shared-types";
 import { ESTADO_BADGE, ESTADO_LABEL, type EstadoOferta } from "@/lib/ofertaEstado";
+import EditarOfertaForm from "./EditarOfertaForm";
+import { editarOferta } from "./actions";
 
 type EstadoHistorial = "PUBLICADA" | "RECHAZADA" | "EXPIRADA";
 const TABS: EstadoHistorial[] = ["PUBLICADA", "RECHAZADA", "EXPIRADA"];
 
+interface Categoria {
+  id: string;
+  nombre: string;
+}
+
 interface OfertaHistorial {
   id: string;
   titulo: string;
+  descripcion: string;
   imagenUrl: string;
+  precioOriginal: string | null;
+  precioOferta: string | null;
+  porcentajeDescuento: number | null;
+  distrito: string | null;
+  direccion: string | null;
+  linkExterno: string | null;
+  fechaInicio: string;
+  fechaVencimiento: string;
+  categoriaId: string;
+  diaSemana: DiaSemana | null;
   estado: EstadoOferta;
   categoria: { nombre: string };
   provincia: string;
@@ -31,9 +50,11 @@ interface HistorialResponse {
 export default async function HistorialOfertas({
   estado,
   page,
+  categorias,
 }: {
   estado: EstadoHistorial;
   page: number;
+  categorias: Categoria[];
 }) {
   const supabase = await createClient();
   const {
@@ -118,6 +139,15 @@ export default async function HistorialOfertas({
                     Editada por <strong>{ultimaEdicion.admin.nombre}</strong> el{" "}
                     {new Date(ultimaEdicion.fecha).toLocaleDateString("es-PA")}
                   </p>
+                )}
+                {oferta.estado === "PUBLICADA" && (
+                  <div className="mt-1">
+                    <EditarOfertaForm
+                      oferta={oferta}
+                      categorias={categorias}
+                      action={editarOferta.bind(null, oferta.id)}
+                    />
+                  </div>
                 )}
               </div>
             </li>

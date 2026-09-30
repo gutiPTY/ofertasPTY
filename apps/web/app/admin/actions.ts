@@ -71,6 +71,7 @@ export async function editarOferta(id: string, formData: FormData) {
     "imagenUrl",
     "precioOriginal",
     "precioOferta",
+    "porcentajeDescuento",
     "provincia",
     "distrito",
     "direccion",

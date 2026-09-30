@@ -290,14 +290,14 @@ export default async function AdminPage({
       <section className="flex flex-col gap-4">
         <h2 className="font-display text-xl font-semibold text-ink">Historial de moderación</h2>
         <Suspense fallback={<HistorialSkeleton />}>
-          <HistorialOfertas estado={historialEstado} page={historialPage} />
+          <HistorialOfertas estado={historialEstado} page={historialPage} categorias={categorias} />
         </Suspense>
       </section>
 
       <section id="todas" className="flex flex-col gap-4">
         <h2 className="font-display text-xl font-semibold text-ink">Todas las ofertas</h2>
         <Suspense fallback={<HistorialSkeleton />}>
-          <TodasLasOfertas page={todasPage} />
+          <TodasLasOfertas page={todasPage} categorias={categorias} />
         </Suspense>
       </section>
 

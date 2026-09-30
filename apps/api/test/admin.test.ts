@@ -139,6 +139,56 @@ describe("/admin", () => {
     });
     expect(res.statusCode).toBe(409);
   }, 15000);
+
+  it("PATCH /admin/ofertas/:id edita una oferta PUBLICADA sin cambiar su estado", async () => {
+    const app = buildApp();
+    const categoria = await prisma.categoria.findFirstOrThrow();
+    const createRes = await app.inject({
+      method: "POST",
+      url: "/ofertas",
+      headers: { authorization: `Bearer ${autor.accessToken}` },
+      payload: {
+        titulo: "Oferta publicada para editar",
+        descripcion: "Descripción de prueba con más de diez caracteres",
+        imagenUrl: "https://example.com/b.jpg",
+        provincia: "Panamá",
+        fechaInicio: new Date().toISOString(),
+        fechaVencimiento: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        categoriaId: categoria.id,
+      },
+    });
+    const publicadaId = createRes.json().oferta.id;
+    await app.inject({
+      method: "POST",
+      url: `/admin/ofertas/${publicadaId}/aprobar`,
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+    });
+
+    const res = await app.inject({
+      method: "PATCH",
+      url: `/admin/ofertas/${publicadaId}`,
+      headers: { authorization: `Bearer ${admin.accessToken}` },
+      payload: { titulo: "Oferta publicada (corregida)", porcentajeDescuento: 20 },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().oferta.estado).toBe("PUBLICADA");
+    expect(res.json().oferta.titulo).toBe("Oferta publicada (corregida)");
+    expect(res.json().cambios.porcentajeDescuento).toBeDefined();
+
+    const edicion = await prisma.ofertaEdicion.findFirst({ where: { ofertaId: publicadaId } });
+    expect((edicion?.cambios as Record<string, unknown>).titulo).toBeDefined();
+  }, 20000);
+
+  it("PATCH /admin/ofertas/:id rechaza a un usuario sin rol admin", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "PATCH",
+      url: `/admin/ofertas/${ofertaId}`,
+      headers: { authorization: `Bearer ${autor.accessToken}` },
+      payload: { titulo: "Intento sin ser admin" },
+    });
+    expect(res.statusCode).toBe(403);
+  });
 });
 
 describe("/admin — Épica 10 reputación de usuarios", () => {

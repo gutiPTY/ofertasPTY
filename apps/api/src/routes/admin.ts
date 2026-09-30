@@ -24,7 +24,7 @@ import {
   emailPromocionComercio,
 } from "../lib/email-templates.js";
 
-const OFERTA_ESTADOS_EDITABLES = new Set(["PENDIENTE", "EN_REVISION"]);
+const OFERTA_ESTADOS_EDITABLES = new Set(["PENDIENTE", "EN_REVISION", "PUBLICADA"]);
 const HISTORIAL_ESTADOS = ["PUBLICADA", "RECHAZADA", "EXPIRADA"] as const;
 const HISTORIAL_PAGE_SIZE = 15;
 const TODAS_PAGE_SIZE = 20;
@@ -321,8 +321,9 @@ export default async function adminRoutes(fastify: FastifyInstance) {
 
   // Épica 3 (ampliada Fase 5): el admin corrige datos menores (precio,
   // fecha, etc.) de una oferta que el usuario cargó mal, antes de decidir
-  // sobre ella. Solo mientras sigue PENDIENTE o EN_REVISION — no se puede
-  // reescribir contenido de una oferta ya publicada/rechazada desde acá.
+  // sobre ella (PENDIENTE/EN_REVISION), o de una ya PUBLICADA. Editar no
+  // cambia el estado: una publicada sigue publicada, y el cambio queda
+  // auditado en OfertaEdicion. RECHAZADA/EXPIRADA no son editables.
   fastify.patch(
     "/admin/ofertas/:id",
     { preHandler: requireAdmin },

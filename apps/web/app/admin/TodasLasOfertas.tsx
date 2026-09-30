@@ -2,12 +2,30 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { ESTADO_BADGE, ESTADO_LABEL, type EstadoOferta } from "@/lib/ofertaEstado";
-import { ocultarOferta, mostrarOferta } from "./actions";
+import type { DiaSemana } from "@ofertaspty/shared-types";
+import EditarOfertaForm from "./EditarOfertaForm";
+import { ocultarOferta, mostrarOferta, editarOferta } from "./actions";
+
+interface Categoria {
+  id: string;
+  nombre: string;
+}
 
 interface OfertaTodas {
   id: string;
   titulo: string;
+  descripcion: string;
   imagenUrl: string;
+  precioOriginal: string | null;
+  precioOferta: string | null;
+  porcentajeDescuento: number | null;
+  distrito: string | null;
+  direccion: string | null;
+  linkExterno: string | null;
+  fechaInicio: string;
+  fechaVencimiento: string;
+  categoriaId: string;
+  diaSemana: DiaSemana | null;
   estado: EstadoOferta;
   oculta: boolean;
   categoria: { nombre: string };
@@ -28,7 +46,7 @@ interface TodasResponse {
 // no filtra por estado: es el único lugar donde el admin ve TODO,
 // incluidas las ofertas ocultas, para poder encontrar y gestionar
 // cualquiera desde un solo lugar.
-export default async function TodasLasOfertas({ page }: { page: number }) {
+export default async function TodasLasOfertas({ page, categorias }: { page: number; categorias: Categoria[] }) {
   const supabase = await createClient();
   const {
     data: { session },
@@ -78,6 +96,15 @@ export default async function TodasLasOfertas({ page }: { page: number }) {
                 {oferta.categoria.nombre} · {oferta.provincia} · publicada por {oferta.creadoPor.nombre} el{" "}
                 {new Date(oferta.creadoEn).toLocaleDateString("es-PA")}
               </p>
+              {oferta.estado === "PUBLICADA" && (
+                <div className="mt-1">
+                  <EditarOfertaForm
+                    oferta={oferta}
+                    categorias={categorias}
+                    action={editarOferta.bind(null, oferta.id)}
+                  />
+                </div>
+              )}
             </div>
             <form action={oferta.oculta ? mostrarOferta.bind(null, oferta.id) : ocultarOferta.bind(null, oferta.id)}>
               <button

@@ -38,8 +38,8 @@ export const ModerarOfertaInputSchema = z.object({
 export type ModerarOfertaInput = z.infer<typeof ModerarOfertaInputSchema>;
 
 // Épica 3 (ampliada en Fase 5): el admin puede corregir datos menores de
-// una oferta (precio, fecha, etc.) mientras sigue PENDIENTE/EN_REVISION,
-// antes de aprobar/rechazar. Todos los campos opcionales, pero se exige
+// una oferta (precio, fecha, etc.) mientras sigue PENDIENTE/EN_REVISION
+// o ya PUBLICADA. Todos los campos opcionales, pero se exige
 // al menos uno.
 export const EditarOfertaInputSchema = OfertaCamposSchema.partial()
   .refine((data) => Object.keys(data).length > 0, { message: "No se enviaron cambios" })
